@@ -12,7 +12,10 @@ class UserController extends Controller
 {
     public function index()
     {
-        return User::with('roles')->get();
+        return response()->json([
+            'message' => 'Daftar User',
+            'data' => User::with('roles')->paginate(10)
+        ]);
     }
 
     public function destroy($id)
@@ -38,10 +41,21 @@ class UserController extends Controller
 
         $user->roles()->detach($role->id);
 
+        if ($user->roles()->exists()) {
+            return response()->json([
+                'message' => 'user tidak memiliki role apapun',
+                'data' => [
+                    'user' => $user->email
+                ]
+            ]);
+        }
+
         return response()->json([
             'message' => 'Role berhasil dihapus dari user',
-            'user' => $user->email,
-            'removed_role' => $role
+            'data' => [
+                'user' => $user->email,
+                'removed_role' => $role
+            ]
         ]);
     }
 }

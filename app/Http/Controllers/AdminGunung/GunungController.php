@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\AdminGunung;
 
 use App\Models\Gunung;
+use App\Models\GunungGaleri;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -10,7 +11,7 @@ use Illuminate\Http\Request;
 class GunungController extends Controller
 {
     public function index() {
-        $gunungs = Gunung::where('created_by', auth()->id())->latest()->get();
+        $gunungs = Gunung::where('created_by', auth()->id())->latest()->paginate(10);
 
         return response()->json([
             'message' => 'Daftar Gunung',
@@ -62,6 +63,7 @@ class GunungController extends Controller
             'nama' => 'sometimes|required|string',
             'lokasi' => 'sometimes|required|string',
             'ketinggian' => 'sometimes|required|integer',
+            'status' => 'sometimes|boolean',
         ]);
 
         $gunung->update($request->only([
@@ -101,12 +103,6 @@ class GunungController extends Controller
         $gunung = Gunung::where('id', $id)
         ->where('created_by', auth()->id())
         ->firstOrFail();
-
-        if (!$gunung) {
-            return response()->json([
-                'message' => 'Gunung tidak ditemukan atau tidak dimiliki oleh admin ini'
-            ], 404);
-        }
 
         $galeri = GunungGaleri::create([
             'foto' => $request->foto,

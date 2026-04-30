@@ -15,4 +15,9 @@ class Booking extends Model
     {
         return $this->belongsTo(Basecamp::class);
     }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
 }

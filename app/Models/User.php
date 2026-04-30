@@ -18,6 +18,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
+        'alamat',
+        'foto',
     ];
 
     protected function casts(): array
@@ -43,4 +46,13 @@ class User extends Authenticatable
         return $this->hasMany(AdminRequest::class);
     }
 
+    public function basecamps()
+    {
+        return $this->hasMany(Basecamp::class, 'admin_basecamp_id');
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
 }
