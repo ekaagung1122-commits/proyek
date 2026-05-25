@@ -9,13 +9,19 @@ class jalur extends Model
     protected $fillable = [
         'basecamp_id',
         'nama_jalur',
-        'estimaasi_waktu',
+        'estimasi_waktu',
         'status',
         'deskripsi',
+        'foto_utama',
     ];
     
     public function basecamp()
     {
         return $this->belongsTo(Basecamp::class);
+    }
+
+    public function kuota()
+    {
+        return $this->hasOne(Jalur::class);
     }
 }

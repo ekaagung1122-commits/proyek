@@ -10,13 +10,15 @@ class AdminRequest extends Model
         'user_id',
         'request_by',
         'request_type',
+        'basecamp_id',
         'status',
-        'notes'
+        'notes',
+        'reason'
     ];
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function documents()

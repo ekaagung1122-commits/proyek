@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Basecamp;
+
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
@@ -12,57 +14,53 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function login(Request $request){
-       $user = User::where('email', $request->email)->first();
+    public function login(Request $request)
+{
+    $user = User::where('email', $request->email)->first();
 
-       if (! $user || !Hash::check($request->password, $user->password)) {
-           return response()->json(['message' => 'Unauthorized'], 401);
-       }
-
-       $token = $user->createToken('token')->plainTextToken;
-
-       return response()->json([
-           'user' => $user,
-           'token' => $token
-       ]);
+    if (!$user || !Hash::check($request->password, $user->password)) {
+        return response()->json([
+            'message' => 'Unauthorized'
+        ], 401);
     }
 
-    public function register(Request $request){
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+    $roles = $user->roles()->pluck('name')->toArray();
 
-        $role = Role::where('name', 'user')->first();
+    $role = 'user';
 
-        if (!$role) {
-            return response()->json(['message' => 'Role tidak ditemukan'], 404);
+    if (in_array('super_admin', $roles)) {
+        $role = 'super_admin';
+    } elseif (in_array('admin_gunung', $roles)) {
+        $role = 'admin_gunung';
+    } elseif (in_array('admin_basecamp', $roles)) {
+        $role = 'admin_basecamp';
+    }
+
+    $basecamp = null;
+
+    // HANYA admin_basecamp yang wajib punya basecamp
+    if ($role === 'admin_basecamp') {
+
+        $basecamp = Basecamp::where('admin_basecamp_id', $user->id)->first();
+
+        if (!$basecamp) {
+            return response()->json([
+                'message' => 'User belum punya basecamp'
+            ], 403);
         }
-
-        $user->roles()->attach($role->id);
-
-        $token = $user->createToken('token')->plainTextToken;
-
-        return response()->json([
-            'user' => $user,
-            'token' => $token
-        ]);
     }
 
-    public function logout(Request $request){
-        if (!$request->user()) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }   
+    $token = $user->createToken('token')->plainTextToken;
 
-        $request->user()
-        ->currentAccessToken()
-        ->delete();
-
-        return response()->json([
-            'message' => 'Logout berhasil'
-        ]);
-
-        dd($request->user());
-    }
+    return response()->json([
+        'user' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $role,
+            'basecamp_id' => $basecamp?->id,
+        ],
+        'token' => $token
+    ]);
+}
 }

@@ -1,9 +1,22 @@
-Hallo {{ $user->name }},
+<h2>Pengajuan Admin Diproses</h2>
 
-status pengajuan admin gunung kamu telah diproses dengan hasil: {{ strtoupper($req->status) }}.
+<p>Hallo {{ $user->name }},</p>
 
-jenis pengajuan: {{ $req->request_type }}
+<p>
+Status pengajuan admin kamu telah diproses dengan hasil:
+<b>{{ strtoupper($req->status) }}</b>
+</p>
 
-keterangan: {{ $req->reason }}
+<p>
+Jenis Pengajuan:
+<b>{{ strtoupper(str_replace('_', ' ', $req->request_type)) }}</b>
+</p>
 
-Terima Kasih
+@if($req->reason)
+<p>
+Keterangan:
+<b>{{ $req->reason }}</b>
+</p>
+@endif
+
+<p>Terima kasih.</p>

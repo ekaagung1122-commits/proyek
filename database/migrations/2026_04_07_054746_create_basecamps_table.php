@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('nama');
             $table->foreignId('gunung_id')->constrained()->cascadeOnDelete();
             $table->string('lokasi');
+            $table->string('foto_utama')->nullable();
             $table->timestamps();
         });
     }

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('request_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('request_type');
+            $table->foreignId('basecamp_id')->nullable()->constrained()->onDelete('cascade');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamps();
         });

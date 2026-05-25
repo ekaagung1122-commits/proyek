@@ -51,7 +51,7 @@ th {
         </tr>
     </thead>
     <tbody>
-        @foreach($basecampData as $data)
+        @foreach($bookings as $data)
         <tr>
             <td>{{ $data->order_id ?? $data->id }}</td>
             <td>{{ $data->user->name ?? '-'}}</td>
@@ -59,7 +59,7 @@ th {
             <td>{{ $data->tanggal_naik }}</td>
             <td>{{ $data->jumlah_pendaki }}</td>
             <td>{{ ucfirst($data->status) }}</td>
-            <td>Rp {{ number_format($data->total_price, 0, ',', '.') }}</
+            <td>Rp {{ number_format($data->total_price, 0, ',', '.') }}</td>
         </tr>
         @endforeach
     </tbody>

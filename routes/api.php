@@ -99,7 +99,7 @@ Route::prefix('admin-gunung')
     Route::post('/basecamps', [BasecampController::class, 'store']);
     Route::put('/basecamps/{id}', [BasecampController::class, 'update']);
     Route::delete('/basecamps/{id}', [BasecampController::class, 'destroy']);
-    Route::patch('/basecamps/{id}/assign-admin', [BasecampController::class, 'assignAdmin']);
+    Route::patch('/basecamps/{id}/assign-admin', [BasecampController::class, 'assignAdminBasecamp']);
 
     // belum ditest postman
     Route::get('/reports', [ReportController::class, 'index']);

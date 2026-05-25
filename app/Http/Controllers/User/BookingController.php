@@ -53,105 +53,100 @@ class BookingController extends Controller
             'jumlah_pendaki' => 'required|integer|min:1',
         ]);
 
-        $duplicateBooking = Booking::where('user_id', auth()->id())
-        ->where('tanggal_naik', $request->tanggal_naik)
-        ->whereIn('status', ['pending', 'confirmed'])
-        ->exists();
+        return DB::transaction(function () use ($request) {
 
-        if ($duplicateBooking) {
+            $basecamp = Basecamp::findOrFail($request->basecamp_id);
+
+            $duplicateBooking = Booking::where('user_id', auth()->id())
+                ->where('tanggal_naik', $request->tanggal_naik)
+                ->whereIn('status', ['pending', 'confirmed'])
+                ->exists();
+
+            if ($duplicateBooking) {
+                return response()->json([
+                    'message' => 'Anda sudah punya booking aktif'
+                ], 400);
+            }
+
+            if ($request->tanggal_naik < now()->toDateString()) {
+                return response()->json([
+                    'message' => 'Tanggal tidak valid'
+                ], 400);
+            }
+
+            $kuota = BasecampKuota::where('basecamp_id', $basecamp->id)
+                ->where('tanggal', $request->tanggal_naik)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$kuota) {
+                return response()->json([
+                    'message' => 'Kuota belum diatur'
+                ], 400);
+            }
+
+            $sisaKuota = $kuota->kuota - $kuota->kuota_terpakai;
+
+            if ($request->jumlah_pendaki > $sisaKuota) {
+                return response()->json([
+                    'message' => 'Kuota tidak mencukupi'
+                ], 400);
+            }
+
+            $kuota->kuota_terpakai += $request->jumlah_pendaki;
+            $kuota->save();
+
+            $harga = $basecamp->harga_tiket;
+            $total_price = $harga * $request->jumlah_pendaki;
+
+            $booking = Booking::create([
+                'user_id' => auth()->id(),
+                'basecamp_id' => $request->basecamp_id,
+                'tanggal_naik' => $request->tanggal_naik,
+                'jumlah_pendaki' => $request->jumlah_pendaki,
+                'harga_per_orang' => $harga,
+                'total_price' => $total_price,
+                'status' => 'pending',
+            ]);
+
+            // MIDTRANS
+            \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+            \Midtrans\Config::$isProduction = false;
+            \Midtrans\Config::$isSanitized = true;
+            \Midtrans\Config::$is3ds = true;
+
+            $orderId = 'BOOK-' . $booking->id . '-' . time();
+
+            $params = [
+                'transaction_details' => [
+                    'order_id' => $orderId,
+                    'gross_amount' => (int) $booking->total_price,
+                ],
+                'customer_details' => [
+                    'first_name' => auth()->user()->name,
+                    'email' => auth()->user()->email
+                ]
+            ];
+
+            $snapToken = \Midtrans\Snap::getSnapToken($params);
+
+            $booking->update([
+                'order_id' => $orderId,
+                'snap_token' => $snapToken
+            ]);
+
+            activityLog(
+                'create',
+                'booking',
+                'User booking ID ' . $booking->id
+            );
+
             return response()->json([
-                'message' => 'Anda memiliki booking aktif untuk tanggal ini'
-            ], 400);
-        }
-
-        if ($request->tanggal_naik < now()->toDateString()) {
-            return response()->json([
-                'message' => 'Tanggal naik harus hari ini atau di masa depan'
-            ], 400);
-        }
-
-        $basecamp = Basecamp::findOrFail($request->basecamp_id);
-
-        if (!$basecamp->harga_tiket) {
-            return response()->json([
-                'message' => 'Harga tiket untuk basecamp ini belum tersedia'
-            ], 400);
-        }
-
-        $kuota = BasecampKuota::where('basecamp_id', $basecamp->id)
-        ->where('tanggal', $request->tanggal_naik)
-        ->first();
-
-        if (!$kuota) {
-            return response()->json([
-                'message' => 'Kuota untuk tanggal naik ini belum diatur'
-            ], 400);
-        }
-
-        $totalBooked = Booking::where('basecamp_id', $basecamp->id)
-        ->where('tanggal_naik', $request->tanggal_naik)
-        ->whereIn('status', ['pending', 'confirmed'])
-        ->sum('jumlah_pendaki');
-
-        $sisaKuota = $kuota->kuota - $totalBooked;
-
-        if ($sisaKuota < $request->jumlah_pendaki) {
-            return response()->json([
-                'message' => 'Kuota untuk tanggal naik ini tidak mencukupi'
-            ], 400);
-        }
-
-        $harga = $basecamp->harga_tiket;
-        $total_price = $harga * $request->jumlah_pendaki;
-
-        $booking = Booking::create([
-            'user_id' => auth()->id(),
-            'basecamp_id' => $request->basecamp_id,
-            'tanggal_naik' => $request->tanggal_naik,
-            'jumlah_pendaki' => $request->jumlah_pendaki,
-            'harga_per_orang' => $harga,
-            'total_price' => $total_price,
-            'status' => 'pending',
-        ]);
-
-        // Set your Merchant Server Key
-        \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        // Set to Development/Sandbox Environment (default). Set to true for Production Environment (accept real transaction).
-        \Midtrans\Config::$isProduction = false;
-        // Set sanitization on (default)
-        \Midtrans\Config::$isSanitized = true;
-        // Set 3DS transaction for credit card to true
-        \Midtrans\Config::$is3ds = true;
-
-        $params = [
-            'transaction_details' => [
-                'order_id' => 'BOOK-' . $booking->id . '-' . time(),
-                'gross_amount' => (int) $booking->total_price,
-            ],
-            'customer_details' => [
-                'first_name' => auth()->user()->name,
-                'email' => auth()->user()->email
-            ]
-        ];
-
-        $snapToken = \Midtrans\Snap::getSnapToken($params);
-
-        $booking->update([
-            'order_id' => $params['transaction_details']['order_id'],
-            'snap_token' => $snapToken
-        ]);
-
-        activityLog(
-            'create',
-            'booking',
-            'User membuat booking ID ' . $booking->id
-        );
-
-        return response()->json([
-            'message' => 'Booking berhasil dibuat',
-            'data' => $booking->fresh(),
-            'snap_token' => $snapToken
-        ], 201);
+                'message' => 'Booking berhasil',
+                'data' => $booking->fresh(),
+                'snap_token' => $snapToken
+            ], 201);
+        });
     }
 
     public function cancel($id)

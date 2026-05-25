@@ -15,7 +15,7 @@ class ReportController extends Controller
     {
         $basecampIds = Basecamp::where('admin_basecamp_id', auth()->id())->pluck('id');
 
-        $query = Booking::with(['basecamp', 'user'])
+        $query = Booking::with(['basecamp', 'user', 'jalur'])
         ->whereIn('basecamp_id', $basecampIds);
 
         if ($request->filled('from')) {
@@ -29,17 +29,17 @@ class ReportController extends Controller
         return response()->json([
             'summary' => [
                 'total_basecamp' => $basecampIds->count(),
-                'total_bookings' => clone($query)->count(),
-                'total_income' => clone($query)
+                'total_bookings' => (clone $query)->count(),
+                'total_income' => (clone $query)
                     ->whereIn('status', ['confirmed', 'completed'])
                     ->sum('total_price'),
             ],
             'bookings_by_status' => [
-                'pending' => clone($query)->where('status', 'pending')->count(),
-                'confirmed' => clone($query)->where('status', 'confirmed')->count(),
-                'completed' => clone($query)->where('status', 'completed')->count(),
+                'pending' => (clone $query)->where('status', 'pending')->count(),
+                'confirmed' => (clone $query)->where('status', 'confirmed')->count(),
+                'completed' => (clone $query)->where('status', 'completed')->count(),
             ],
-            'data' => clone($query)->latest()->paginate(10)  
+            'data' => (clone $query)->latest()->paginate(10)  
         ]);
     }
 
@@ -70,6 +70,8 @@ class ReportController extends Controller
             'bookings' => $bookings,
             'summary' => $summary,
             'user' => auth()->user(),
+            'from' => $request->from,
+            'to' => $request->to,
         ]);
 
         return $pdf->download('laporan-admin-basecamp.pdf');

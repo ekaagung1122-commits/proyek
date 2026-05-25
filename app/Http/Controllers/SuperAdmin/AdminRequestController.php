@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\AdminRequestDocument;
 use App\Models\ActivityLog;
+use App\Models\Basecamp;
 
 use App\Mail\RequestStatusMail;
 use Illuminate\Support\Facades\Mail;   
@@ -53,6 +54,17 @@ class AdminRequestController extends Controller
         $role = Role::where('name', $req->request_type)->firstOrFail();
 
         $targetUser->roles()->syncWithoutDetaching($role->id);
+
+            if ($req->basecamp_id) {
+                $basecamp = Basecamp::find($req->basecamp_id);
+
+                if ($basecamp) {
+                    $basecamp->update([
+                        'admin_basecamp_id' => $targetUser->id
+                    ]);
+                }
+            }
+
         $req->update([
             'status' => 'approved',
             'reason' => 'Pengajuan telah disetujui',
@@ -60,7 +72,7 @@ class AdminRequestController extends Controller
 
         Mail::to($targetUser->email)->send(new RequestStatusMail($req, $targetUser));
 
-        activityLog(
+        logActivity(
             'approve',
             'admin_request',
             'Super Admin menyetujui request admin ID ' . $req->id
@@ -95,9 +107,11 @@ class AdminRequestController extends Controller
             'reason' => $request->reason
         ]);
 
+        $req->refresh();
+
         Mail::to($targetUser->email)->send(new RequestStatusMail($req, $targetUser));
     
-        activityLog(
+        logActivity(
             'reject',
             'admin_request',
             'Super Admin menolak request admin ID ' . $req->id

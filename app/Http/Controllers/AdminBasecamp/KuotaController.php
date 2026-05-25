@@ -12,6 +12,12 @@ class KuotaController extends Controller
 {
     public function getOwnedBasecamp($basecampId)
     {
+        $user = auth()->user();
+
+        if (!$user->roles->contains('name', 'admin_basecamp')) {
+            abort(403, 'Unauthorized');
+        }
+
         return Basecamp::where('id', $basecampId)
         ->where('admin_basecamp_id', auth()->id())
         ->firstOrFail();
@@ -58,7 +64,8 @@ class KuotaController extends Controller
                 'tanggal' => $request->tanggal
             ],
             [
-                'kuota' => $request->kuota
+                'kuota' => $request->kuota,
+                'kuota_terpakai' => 0
             ]
         );
 

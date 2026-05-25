@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('basecamp_id')->constrained()->cascadeOnDelete();
             $table->date('tanggal');
             $table->integer('kuota');
+            $table->integer('kuota_terpakai');
             $table->timestamps();
 
             $table->unique(['basecamp_id', 'tanggal']);

@@ -15,9 +15,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('basecamp_id')->constrained()->cascadeOnDelete();
             $table->string('nama_jalur');
-            $table->integer('estimaasi_waktu')->unsigned();
+            $table->integer('estimasi_waktu')->unsigned();
             $table->enum('status', ['buka', 'tutup'])->default('buka');
             $table->text('deskripsi')->nullable();
+            $table->string('foto_utama')->nullable();
             $table->timestamps();
         });
     }

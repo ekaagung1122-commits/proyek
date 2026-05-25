@@ -10,7 +10,7 @@ class Gunung extends Model
         'nama',
         'lokasi',
         'foto_utama',
-        'deskipsi',
+        'deskripsi',
         'status',
         'ketinggian',
         'created_by'

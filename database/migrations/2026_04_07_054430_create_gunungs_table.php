@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('nama');
             $table->string('lokasi');
             $table->string('foto_utama')->nullable();
-            $table->text('deskipsi')->nullable();
+            $table->text('deskripsi')->nullable();
             $table->boolean('status')->default(true);
             $table->integer('ketinggian');
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();

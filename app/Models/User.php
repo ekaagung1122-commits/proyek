@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -31,26 +32,44 @@ class User extends Authenticatable
         ];
     }
 
+    // =========================
+    // RELASI BOOKINGS
+    // =========================
     public function bookings()
     {
         return $this->hasMany(Booking::class);
     }
 
+    // =========================
+    // RELASI ROLES
+    // =========================
     public function roles()
     {
         return $this->belongsToMany(Role::class);
     }
 
+    // =========================
+    // RELASI ADMIN REQUEST
+    // =========================
     public function adminRequests()
     {
         return $this->hasMany(AdminRequest::class);
     }
 
-    public function basecamps()
+    // =========================
+    // RELASI BASECAMP
+    // =========================
+    public function basecamp()
     {
-        return $this->hasMany(Basecamp::class, 'admin_basecamp_id');
+        return $this->hasOne(
+            Basecamp::class,
+            'admin_basecamp_id'
+        );
     }
 
+    // =========================
+    // RELASI REVIEW
+    // =========================
     public function reviews()
     {
         return $this->hasMany(Review::class);

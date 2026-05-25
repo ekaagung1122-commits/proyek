@@ -7,16 +7,22 @@ use App\Models\Basecamp;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class JalurController extends Controller
 {
-    public function getOwnedBasecamp($basecampId)
+     public function getOwnedBasecamp($basecampId)
     {
+        $user = auth()->user();
+
+        if (!$user->roles->contains('name', 'admin_basecamp')) {
+            abort(403, 'Unauthorized');
+        }
+
         return Basecamp::where('id', $basecampId)
         ->where('admin_basecamp_id', auth()->id())
         ->firstOrFail();
     }
-
 
     public function index($basecampId)
     {
@@ -54,7 +60,14 @@ class JalurController extends Controller
             'estimasi_waktu' => 'required|integer|min:1',
             'status' => 'required|in:buka,tutup',
             'deskripsi' => 'nullable|string',
+            'foto_utama' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
         ]);
+
+        if ($request->hasFile('foto_utama')) {
+            $validatedData['foto_utama'] = $request
+                    ->file('foto_utama')
+                    ->store('jalur', 'public');
+        }
 
         $jalur = $basecamp->jalurs()->create($validatedData);
 
@@ -74,7 +87,25 @@ class JalurController extends Controller
             'estimasi_waktu' => 'required|integer|min:1',
             'status' => 'required|in:buka,tutup',
             'deskripsi' => 'nullable|string',
+            'foto_utama' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
         ]);
+
+        $data = $request->except('foto_utama');
+
+        if ($request->hasFile('foto_utama')) {
+
+            if ($jalur->foto_utama && 
+            Storage::disk('public')->exists($jalur->foto_utama)
+            ) {
+                Storage::disk('public')->delete($jalur->foto_utama);
+            }
+
+            $validatedData['foto_utama'] = $request
+                ->file('foto_utama')
+                ->store('jalur', 'public');
+        } else {
+            $validatedData['foto_utama'] = $jalur->foto_utama;
+        }
 
         $jalur->update($validatedData);
 

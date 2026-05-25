@@ -16,7 +16,9 @@ class BasecampController extends Controller
             'message' => 'Daftar Basecamp',
             'data' => Basecamp::whereHas('gunung', function($query) {
                 $query->where('created_by', auth()->id());
-            })->latest()->paginate(10)
+            })
+            ->latest()
+            ->paginate(10)
         ]);
     }
 
@@ -40,17 +42,27 @@ class BasecampController extends Controller
             'gunung_id' => 'required|exists:gunungs,id',
             'lokasi' => 'required|string',
             'harga_tiket' => 'required|integer|min:0',
+            'foto_utama' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
         ]);
 
         Gunung::where('id', $request->gunung_id)
         ->where('created_by', auth()->id())
         ->firstOrFail();
 
+        $fotoPath = null;
+
+        if ($request->hasFile('foto_utama')) {
+            $fotoPath = $request
+                ->file('foto_utama')
+                ->store('basecamp', 'public');
+        }
+
         $basecamp = Basecamp::create([
             'nama' => $request->nama,
             'gunung_id' => $request->gunung_id,
             'lokasi' => $request->lokasi,
             'harga_tiket' => $request->harga_tiket,
+            'foto_utama' => $fotoPath
         ]);
 
         return response()->json([
@@ -69,12 +81,29 @@ class BasecampController extends Controller
 
         $request->validate([
             'nama' => 'sometimes|required|string',
-            'gunnung_id' => 'sometimes|required|exists:gunungs,id',
+            'gunung_id' => 'sometimes|required|exists:gunungs,id',
             'lokasi' => 'sometimes|required|string',
             'harga_tiket' => 'sometimes|required|integer',
+            'kuota' => 'sometimes|required|integer',
+            'foto_utama' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
         ]);
 
-        $basecamp->update($request->all());
+        $data = $request->except('foto_utama');
+
+        if ($request->hasFile('foto_utama')) {
+
+            if ($basecamp->foto_utama && 
+            Storage::disk('public')->exists($basecamp->foto_utama)
+            ) {
+                Storage::disk('public')->delete($basecamp->foto_utama);
+            }
+
+            $data['foto_utama'] = $request
+                ->file('foto_utama')
+                ->store('basecamp', 'public');
+        }
+
+        $basecamp->update($data);
 
         return response()->json([
             'message' => 'Basecamp berhasil diperbarui',
