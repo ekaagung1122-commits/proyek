@@ -10,21 +10,22 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BookingController extends Controller
 {
     public function index(Request $request)
     {
         $bookings = Booking::with('basecamp')
-        ->where('user_id', auth()->id());
+            ->where('user_id', auth()->id());
 
         if ($request->has('status')) {
             $bookings->where('status', $request->status);
         }
 
         $bookings = $bookings->latest()
-        ->paginate(10)
-        ->appends($request->query());
+            ->paginate(10)
+            ->appends($request->query());
 
         return response()->json([
             'message' => 'Riwayat Booking',
@@ -35,9 +36,9 @@ class BookingController extends Controller
     public function show($id)
     {
         $booking = Booking::with('basecamp')
-        ->where('user_id', auth()->id())
-        ->where('id', $id)
-        ->firstOrFail();
+            ->where('user_id', auth()->id())
+            ->where('id', $id)
+            ->firstOrFail();
 
         return response()->json([
             'message' => 'Detail Booking',
@@ -53,107 +54,128 @@ class BookingController extends Controller
             'jumlah_pendaki' => 'required|integer|min:1',
         ]);
 
-        return DB::transaction(function () use ($request) {
+        try {
+            return DB::transaction(function () use ($request) {
+                $basecamp = Basecamp::findOrFail($request->basecamp_id);
 
-            $basecamp = Basecamp::findOrFail($request->basecamp_id);
+                $duplicateBooking = Booking::where('user_id', auth()->id())
+                    ->where('tanggal_naik', $request->tanggal_naik)
+                    ->whereIn('status', ['pending', 'confirmed'])
+                    ->exists();
 
-            $duplicateBooking = Booking::where('user_id', auth()->id())
-                ->where('tanggal_naik', $request->tanggal_naik)
-                ->whereIn('status', ['pending', 'confirmed'])
-                ->exists();
+                if ($duplicateBooking) {
+                    return response()->json(['message' => 'Anda sudah punya booking aktif'], 400);
+                }
 
-            if ($duplicateBooking) {
-                return response()->json([
-                    'message' => 'Anda sudah punya booking aktif'
-                ], 400);
-            }
+                if ($request->tanggal_naik < now()->toDateString()) {
+                    return response()->json(['message' => 'Tanggal tidak valid atau sudah lewat'], 400);
+                }
 
-            if ($request->tanggal_naik < now()->toDateString()) {
-                return response()->json([
-                    'message' => 'Tanggal tidak valid'
-                ], 400);
-            }
+                $kuota = BasecampKuota::where('basecamp_id', $basecamp->id)
+                    ->where('tanggal', $request->tanggal_naik)
+                    ->lockForUpdate()
+                    ->first();
 
-            $kuota = BasecampKuota::where('basecamp_id', $basecamp->id)
-                ->where('tanggal', $request->tanggal_naik)
-                ->lockForUpdate()
-                ->first();
+                if (!$kuota) {
+                    return response()->json(['message' => 'Kuota belum diatur oleh admin'], 400);
+                }
 
-            if (!$kuota) {
-                return response()->json([
-                    'message' => 'Kuota belum diatur'
-                ], 400);
-            }
+                $sisaKuota = $kuota->kuota - $kuota->kuota_terpakai;
+                if ($request->jumlah_pendaki > $sisaKuota) {
+                    return response()->json(['message' => 'Kuota untuk tanggal ini tidak mencukupi'], 400);
+                }
 
-            $sisaKuota = $kuota->kuota - $kuota->kuota_terpakai;
+                $kuota->kuota_terpakai += $request->jumlah_pendaki;
+                $kuota->save();
 
-            if ($request->jumlah_pendaki > $sisaKuota) {
-                return response()->json([
-                    'message' => 'Kuota tidak mencukupi'
-                ], 400);
-            }
+                $harga = $basecamp->harga_tiket;
+                $total_price = $harga * $request->jumlah_pendaki;
 
-            $kuota->kuota_terpakai += $request->jumlah_pendaki;
-            $kuota->save();
+                if (!$total_price || $total_price <= 0) {
+                    $total_price = $request->input('total_price', 50000);
+                }
 
-            $harga = $basecamp->harga_tiket;
-            $total_price = $harga * $request->jumlah_pendaki;
+                // 1. Buat data booking awal di database lokal
+                $booking = Booking::create([
+                    'user_id' => auth()->id(),
+                    'basecamp_id' => $request->basecamp_id,
+                    'tanggal_naik' => $request->tanggal_naik,
+                    'jumlah_pendaki' => $request->jumlah_pendaki,
+                    'harga_per_orang' => $harga > 0 ? $harga : ($total_price / $request->jumlah_pendaki),
+                    'total_price' => $total_price,
+                    'status' => 'pending',
+                ]);
 
-            $booking = Booking::create([
-                'user_id' => auth()->id(),
-                'basecamp_id' => $request->basecamp_id,
-                'tanggal_naik' => $request->tanggal_naik,
-                'jumlah_pendaki' => $request->jumlah_pendaki,
-                'harga_per_orang' => $harga,
-                'total_price' => $total_price,
-                'status' => 'pending',
-            ]);
+                $orderId = 'BOOK-' . $booking->id . '-' . time();
 
-            // MIDTRANS
-            \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-            \Midtrans\Config::$isProduction = false;
-            \Midtrans\Config::$isSanitized = true;
-            \Midtrans\Config::$is3ds = true;
+                $user = auth()->user();
+                $userName = $user && $user->name ? $user->name : 'Pendaki';
+                $userEmail = $user && $user->email ? $user->email : 'pendaki@summitgo.com';
 
-            $orderId = 'BOOK-' . $booking->id . '-' . time();
+                $serverKey = env('MIDTRANS_SERVER_KEY');
+                $midtransUrl = 'https://app.sandbox.midtrans.com/snap/v1/transactions';
 
-            $params = [
-                'transaction_details' => [
+                // 2. Tembak API Midtrans dengan penambahan parameter callbacks (Langkah 2)
+                $response = \Illuminate\Support\Facades\Http::withoutVerifying()
+                    ->withBasicAuth($serverKey, '')
+                    ->withHeaders([
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                    ])
+                    ->post($midtransUrl, [
+                        'transaction_details' => [
+                            'order_id' => $orderId,
+                            'gross_amount' => (int) $total_price,
+                        ],
+                        'customer_details' => [
+                            'first_name' => strval($userName),
+                            'email' => strval($userEmail),
+                        ],
+                        // 🛠️ PERBAIKAN: Menambahkan instruksi redirect kembali ke Flutter Web localhost setelah bayar
+                        'callbacks' => [
+                            'finish' => 'http://localhost:6881/#/history',
+                            'unfinish' => 'http://localhost:6881/#/history',
+                            'error' => 'http://localhost:6881/#/history',
+                        ]
+                    ]);
+
+                if ($response->failed()) {
+                    throw new \Exception("Midtrans API Error: " . $response->body());
+                }
+
+                $midtransData = $response->json();
+                $snapToken = $midtransData['token'] ?? null;
+
+                if (!$snapToken) {
+                    throw new \Exception("Gagal mendapatkan Snap Token dari Midtrans response.");
+                }
+
+                $booking->update([
                     'order_id' => $orderId,
-                    'gross_amount' => (int) $booking->total_price,
-                ],
-                'customer_details' => [
-                    'first_name' => auth()->user()->name,
-                    'email' => auth()->user()->email
-                ]
-            ];
+                    'snap_token' => $snapToken
+                ]);
 
-            $snapToken = \Midtrans\Snap::getSnapToken($params);
-
-            $booking->update([
-                'order_id' => $orderId,
-                'snap_token' => $snapToken
-            ]);
-
-            activityLog(
-                'create',
-                'booking',
-                'User booking ID ' . $booking->id
-            );
+                return response()->json([
+                    'message' => 'Booking berhasil',
+                    'data' => $booking->fresh(['basecamp']),
+                    'snap_token' => $snapToken
+                ], 201);
+            });
+        } catch (\Exception $e) {
+            \Log::error('Gagal Booking: ' . $e->getMessage());
 
             return response()->json([
-                'message' => 'Booking berhasil',
-                'data' => $booking->fresh(),
-                'snap_token' => $snapToken
-            ], 201);
-        });
+                'message' => 'Server Gagal Memproses Transaksi Booking.',
+                'error_detail' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function cancel($id)
     {
         $booking = Booking::where('user_id', auth()->id())
-        ->where('id', $id)
-        ->firstOrFail();
+            ->where('id', $id)
+            ->firstOrFail();
 
         if ($booking->status != 'pending') {
             return response()->json([
@@ -165,11 +187,13 @@ class BookingController extends Controller
             'status' => 'cancelled'
         ]);
 
-        activityLog(
-            'cancel',
-            'booking',
-            'User cancel booking ID ' . $booking->id
-        );
+        if (function_exists('activityLog')) {
+            activityLog(
+                'cancel',
+                'booking',
+                'User cancel booking ID ' . $booking->id
+            );
+        }
 
         return response()->json([
             'message' => 'Booking berhasil dibatalkan'
@@ -179,9 +203,9 @@ class BookingController extends Controller
     public function downloadPdf($id)
     {
         $booking = Booking::with('basecamp')
-        ->where('user_id', auth()->id())
-        ->where('id', $id)
-        ->firstOrFail();
+            ->where('user_id', auth()->id())
+            ->where('id', $id)
+            ->firstOrFail();
 
         if ($booking->status !== 'confirmed') {
             return response()->json([
@@ -202,16 +226,16 @@ class BookingController extends Controller
     public function history(Request $request)
     {
         $bookings = Booking::with('basecamp')
-        ->where('user_id', auth()->id())
-        ->whereIn('status', ['confirmed', 'completed']);
+            ->where('user_id', auth()->id())
+            ->whereIn('status', ['confirmed', 'completed']);
 
         if ($request->filled('status') && in_array($request->status, ['confirmed', 'completed'])) {
             $bookings->where('status', $request->status);
         }
 
         $bookings = $bookings->latest()
-        ->paginate(10)
-        ->appends($request->query());
+            ->paginate(10)
+            ->appends($request->query());
 
         return response()->json([
             'message' => 'Riwayat Pendakian',
@@ -222,8 +246,8 @@ class BookingController extends Controller
     public function reschedule(Request $request, $id)
     {
         $booking = Booking::where('user_id', auth()->id())
-        ->where('id', $id)
-        ->firstOrFail();
+            ->where('id', $id)
+            ->firstOrFail();
 
         $request->validate([
             'tanggal_naik' => 'required|date|after_or_equal:today',
@@ -242,8 +266,8 @@ class BookingController extends Controller
         }
 
         $kuota = BasecampKuota::where('basecamp_id', $booking->basecamp_id)
-        ->where('tanggal', $request->tanggal_naik)
-        ->first();
+            ->where('tanggal', $request->tanggal_naik)
+            ->first();
 
         if (!$kuota) {
             return response()->json([
@@ -252,10 +276,10 @@ class BookingController extends Controller
         }
 
         $totalBooked = Booking::where('basecamp_id', $booking->basecamp_id)
-        ->where('tanggal_naik', $request->tanggal_naik)
-        ->whereIn('status', ['pending', 'confirmed'])
-        ->where('id', '!=', $booking->id)
-        ->sum('jumlah_pendaki');
+            ->where('tanggal_naik', $request->tanggal_naik)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('id', '!=', $booking->id)
+            ->sum('jumlah_pendaki');
 
         $sisaKuota = $kuota->kuota - $totalBooked;
 
