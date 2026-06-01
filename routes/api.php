@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\Route;
 // Authentication routes
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('/google-login', [AuthController::class, 'googleLogin']); // 🛠️ Route baru untuk Google Sign-In Flutter
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 // belum ditest postman
@@ -77,7 +78,7 @@ Route::prefix('admin-basecamp')
     
     Route::get('/reports', [AdminBasecampReportController::class, 'index']);
     Route::get('/reports/pdf', [AdminBasecampReportController::class, 'downloadPdf']);
-    });
+});
 
 // Admin Gunung Routes 
 Route::prefix('admin-gunung')
@@ -146,7 +147,7 @@ Route::prefix('user')
 ->group(function () {
     Route::post('/requests', [UserAdminRequestController::class, 'requestAdminGunung']);
 
-// belum ditest postman
+    // belum ditest postman
     Route::get('/bookings', [BookingController::class, 'index']);
     Route::get('/bookings/{id}', [BookingController::class, 'show']);
     Route::post('/bookings', [BookingController::class, 'store']);
