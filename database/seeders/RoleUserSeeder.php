@@ -53,13 +53,23 @@ class RoleUserSeeder extends Seeder
             ]
         );
 
+        $basecamp = User::firstOrCreate(
+            ['email' => 'basecamp@mail.com'],
+            [
+                'name' => 'Admin Basecamp',
+                'password' => bcrypt('123456')
+            ]
+        );
+
         // Assign role
         $superRole = Role::where('name', 'super_admin')->first();
         $userRole = Role::where('name', 'user')->first();
         $gunungRole = Role::where('name', 'admin_gunung')->first();
+        $basecampRole = Role::where('name', 'admin_basecamp')->first();
 
         $super->roles()->syncWithoutDetaching([$superRole->id]);
         $user->roles()->syncWithoutDetaching([$userRole->id]);
         $gunung->roles()->syncWithoutDetaching([$gunungRole->id]);
+        $basecamp->roles()->syncWithoutDetaching([$basecampRole->id]);
     }
 }
