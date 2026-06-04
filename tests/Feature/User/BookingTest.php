@@ -43,7 +43,7 @@ class BookingTest extends TestCase
             'user_id' => $user->id
         ]);
 
-        $response = $this->getJson("/api/user/bookings/{$booking->id}");
+        $response = $this->getJson("/api/bookings/{$booking->id}");
 
         $response->assertStatus(200)
                  ->assertJson([
