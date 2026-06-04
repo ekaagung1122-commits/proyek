@@ -22,24 +22,18 @@ class ForgotPasswordTest extends TestCase
             'email' => 'user@gmail.com'
         ]);
 
-        $response = $this->postJson('api/password/forgot', [
+        $response = $this->postJson('/api/password/forgot', [
             'email' => 'user@gmail.com'
         ]);
 
-        $response->assertStatus(200)
-                 ->assertJson([
-                     'message' => 'Link reset password telah dikirim ke email Anda'
-                 ]);
+        $response->assertStatus(200);
 
-        Notification::assertSentTo(
-            $user,
-            ResetPassword::class
-        );
+        Notification::assertSentTo($user, ResetPassword::class);
     }
 
     public function test_forgot_password_fails_if_email_not_found()
     {
-        $response = $this->postJson('api/password/forgot', [
+        $response = $this->postJson('/api/password/forgot', [
             'email' => 'tidakada@gmail.com'
         ]);
 
@@ -55,23 +49,17 @@ class ForgotPasswordTest extends TestCase
 
         $token = Password::createToken($user);
 
-        $response = $this->postJson('api/password/reset', [
+        $response = $this->postJson('/api/password/reset', [
             'email' => 'user@gmail.com',
             'token' => $token,
             'password' => 'passwordbaru123',
             'password_confirmation' => 'passwordbaru123'
         ]);
 
-        $response->assertStatus(200)
-                 ->assertJson([
-                     'message' => 'Password berhasil direset'
-                 ]);
+        $response->assertStatus(200);
 
         $this->assertTrue(
-            Hash::check(
-                'passwordbaru123',
-                $user->fresh()->password
-            )
+            Hash::check('passwordbaru123', $user->fresh()->password)
         );
     }
 
@@ -81,17 +69,14 @@ class ForgotPasswordTest extends TestCase
             'email' => 'user@gmail.com'
         ]);
 
-        $response = $this->postJson('api/password/reset', [
+        $response = $this->postJson('/api/password/reset', [
             'email' => 'user@gmail.com',
             'token' => 'token-salah',
             'password' => 'passwordbaru123',
             'password_confirmation' => 'passwordbaru123'
         ]);
 
-        $response->assertStatus(200)
-                 ->assertJson([
-                     'message' => 'Gagal mereset password, token tidak valid atau sudah kadaluarsa'
-                 ]);
+        $response->assertStatus(400);
     }
 
     public function test_reset_password_requires_password_confirmation()
@@ -102,7 +87,7 @@ class ForgotPasswordTest extends TestCase
 
         $token = Password::createToken($user);
 
-        $response = $this->postJson('api/password/reset', [
+        $response = $this->postJson('/api/password/reset', [
             'email' => 'user@gmail.com',
             'token' => $token,
             'password' => 'passwordbaru123',

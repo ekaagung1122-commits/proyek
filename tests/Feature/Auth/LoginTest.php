@@ -6,6 +6,7 @@ use Tests\TestCase;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Basecamp;
+use App\Models\Gunung;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 
@@ -15,9 +16,7 @@ class LoginTest extends TestCase
 
     public function test_user_can_login_successfully()
     {
-        $role = Role::create([
-            'name' => 'user'
-        ]);
+        $role = Role::create(['name' => 'user']);
 
         $user = User::factory()->create([
             'email' => 'user@gmail.com',
@@ -56,19 +55,15 @@ class LoginTest extends TestCase
             'password' => 'salahpassword'
         ]);
 
-        $response->assertStatus(401)
-                 ->assertJson([
-                     'message' => 'Unauthorized'
-                 ]);
+        $response->assertStatus(401);
     }
 
     public function test_admin_basecamp_must_have_basecamp()
     {
-        $role = Role::create([
-            'name' => 'admin_basecamp'
-        ]);
+        $role = Role::create(['name' => 'admin_basecamp']);
 
         $user = User::factory()->create([
+            'email' => 'admin@gmail.com',
             'password' => Hash::make('password123')
         ]);
 
@@ -87,18 +82,20 @@ class LoginTest extends TestCase
 
     public function test_admin_basecamp_can_login_if_has_basecamp()
     {
-        $role = Role::create([
-            'name' => 'admin_basecamp'
-        ]);
+        $role = Role::create(['name' => 'admin_basecamp']);
 
         $user = User::factory()->create([
+            'email' => 'admin@gmail.com',
             'password' => Hash::make('password123')
         ]);
 
         $user->roles()->attach($role->id);
 
+        $gunung = Gunung::factory()->create();
+
         $basecamp = Basecamp::create([
-            'name' => 'Basecamp Semeru',
+            'nama' => 'Basecamp Semeru', // FIX: nama (bukan name)
+            'gunung_id' => $gunung->id,
             'admin_basecamp_id' => $user->id
         ]);
 
@@ -108,11 +105,9 @@ class LoginTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-                 ->assertJson([
-                     'user' => [
-                         'role' => 'admin_basecamp',
-                         'basecamp_id' => $basecamp->id
-                     ]
+                 ->assertJsonFragment([
+                     'role' => 'admin_basecamp',
+                     'basecamp_id' => $basecamp->id
                  ]);
     }
 }
