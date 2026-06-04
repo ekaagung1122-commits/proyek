@@ -8,6 +8,7 @@ class AdminRequest extends Model
 {
     protected $fillable = [
         'user_id',
+        'email',
         'request_by',
         'request_type',
         'basecamp_id',
@@ -18,7 +19,7 @@ class AdminRequest extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'email', 'email');
     }
 
     public function documents()

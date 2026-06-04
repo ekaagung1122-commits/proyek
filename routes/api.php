@@ -153,6 +153,7 @@ Route::prefix('user')
     Route::post('/bookings', [BookingController::class, 'store']);
     Route::patch('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
     Route::get('/bookings/history', [BookingController::class, 'history']);
+    Route::get('/bookings/{id}/reschedule', [BookingController::class, 'reschedule']);
     Route::get('/bookings/{id}/pdf', [BookingController::class, 'downloadPdf']);
 
     Route::get('/profile', [ProfileController::class, 'show']);

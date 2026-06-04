@@ -26,7 +26,7 @@ class AdminRequestController extends Controller
     public function requestAdminBasecamp(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'email' => 'required|exists:users,email',
             'basecamp_id' => 'required|exists:basecamps,id',
         ]);
 
@@ -36,7 +36,7 @@ class AdminRequestController extends Controller
         })
         ->firstOrFail();
 
-        $exists = AdminRequest::where('user_id', $request->user_id)
+        $exists = AdminRequest::where('email', $request->email)
             ->where('status', 'pending')
             ->where('request_type', 'admin_basecamp')
             ->where('basecamp_id', $request->basecamp_id)
@@ -49,7 +49,7 @@ class AdminRequestController extends Controller
         }
 
         $data = AdminRequest::create([
-            'user_id' => $request->user_id,
+            'email' => $request->email,
             'request_by' => auth()->id(),
             'request_type' => 'admin_basecamp',
             'basecamp_id' => $request->basecamp_id,
