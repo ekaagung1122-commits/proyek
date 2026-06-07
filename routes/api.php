@@ -26,6 +26,7 @@ use App\Http\Controllers\User\BookingController;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\ReviewController;
 use App\Http\Controllers\User\AdminRequestController as UserAdminRequestController;
+use App\Http\Controllers\User\BasecampController as UserBasecampController;
 
 use App\Http\Controllers\NotificationController;
 
@@ -180,3 +181,16 @@ Route::prefix('notifications')
 // Midtrans route
 // belum ditest postman
 Route::post('/payment/callback', [PaymentCallbackController::class, 'handle']);
+
+//basecamp
+Route::prefix('user')
+->group(function () {
+
+    Route::get('/gunungs', [UserGunungController::class, 'index']);
+    Route::get('/gunungs/{id}', [UserGunungController::class, 'show']);
+
+    Route::get('/basecamps', [UserBasecampController::class, 'index']);
+    Route::get('/basecamps/{id}', [UserBasecampController::class, 'show']);
+
+    Route::get('/gunungs/{gunungId}/reviews', [ReviewController::class, 'gunungReviews']);
+});
