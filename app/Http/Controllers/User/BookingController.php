@@ -131,12 +131,6 @@ class BookingController extends Controller
                             'first_name' => strval($userName),
                             'email' => strval($userEmail),
                         ],
-                        // 🛠️ PERBAIKAN: Menambahkan instruksi redirect kembali ke Flutter Web localhost setelah bayar
-                        'callbacks' => [
-                            'finish' => 'http://localhost:6881/#/history',
-                            'unfinish' => 'http://localhost:6881/#/history',
-                            'error' => 'http://localhost:6881/#/history',
-                        ]
                     ]);
 
                 if ($response->failed()) {

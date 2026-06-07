@@ -22,14 +22,14 @@ class PaymentCallbackController extends Controller
             \Log::error('Booking not found for order_id: ' . $order_id);
             return response()->json([
                 'message' => 'Booking not found'
-                ], 404);
+            ], 404);
         }
 
         if ($transaction_status === 'settlement' || $transaction_status === 'capture') {
-            $booking->status = 'confirmed';
-            $booking->save();
 
-            \Log::info('Booking confirmed for order_id: ' . $order_id);
+            \Log::info(
+                'Pembayaran berhasil untuk booking ID: ' . $booking->id
+            );
         } elseif (in_array($transaction_status, ['cancel', 'deny', 'expire'])) {
             $booking->status = 'cancelled';
             $booking->save();

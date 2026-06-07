@@ -11,12 +11,12 @@ class BookingController extends Controller
 {
     public function index()
     {
-         $bookings = Booking::with(['user', 'basecamp'])
-        ->whereHas('basecamp', function($query) {
-            $query->where('admin_basecamp_id', auth()->id());
-        })
-        ->latest()
-        ->paginate(10);
+        $bookings = Booking::with(['user', 'basecamp'])
+            ->whereHas('basecamp', function ($query) {
+                $query->where('admin_basecamp_id', auth()->id());
+            })
+            ->latest()
+            ->paginate(10);
 
         return response()->json([
             'message' => 'Daftar Booking',
@@ -27,11 +27,11 @@ class BookingController extends Controller
     public function show($id)
     {
         $booking = Booking::with(['user', 'basecamp'])
-        ->whereHas('basecamp', function($query) {
-            $query->where('admin_basecamp_id', auth()->id());
-        })
-        ->where('id', $id)
-        ->firstOrFail();
+            ->whereHas('basecamp', function ($query) {
+                $query->where('admin_basecamp_id', auth()->id());
+            })
+            ->where('id', $id)
+            ->firstOrFail();
 
         return response()->json([
             'message' => 'Detail Booking',
@@ -42,11 +42,11 @@ class BookingController extends Controller
     public function checkin(Request $request, $id)
     {
         $booking = Booking::with('basecamp')
-        ->whereHas('basecamp', function($query) {
-            $query->where('admin_basecamp_id', auth()->id());
-        })
-        ->where('id', $id)
-        ->firstOrFail();
+            ->whereHas('basecamp', function ($query) {
+                $query->where('admin_basecamp_id', auth()->id());
+            })
+            ->where('id', $id)
+            ->firstOrFail();
 
         if ($booking->status !== 'confirmed') {
             return response()->json([
@@ -79,11 +79,11 @@ class BookingController extends Controller
     public function checkout($id)
     {
         $booking = Booking::with('basecamp')
-        ->whereHas('basecamp', function($query) {
-            $query->where('admin_basecamp_id', auth()->id());
-        })
-        ->where('id', $id)
-        ->firstOrFail();
+            ->whereHas('basecamp', function ($query) {
+                $query->where('admin_basecamp_id', auth()->id());
+            })
+            ->where('id', $id)
+            ->firstOrFail();
 
         if ($booking->status !== 'confirmed') {
             return response()->json([
@@ -106,12 +106,37 @@ class BookingController extends Controller
         $booking->update([
             'checkout_at' => now(),
             'checkout_by' => auth()->id(),
-            'status' => 'completed'
+            'status' => 'confirmed'
         ]);
 
         return response()->json([
             'message' => 'Check-out berhasil',
             'data' => $booking->fresh()
+        ]);
+    }
+
+    public function confirm($id)
+    {
+        $booking = Booking::with('basecamp')
+            ->whereHas('basecamp', function ($query) {
+                $query->where('admin_basecamp_id', auth()->id());
+            })
+            ->where('id', $id)
+            ->firstOrFail();
+
+        if ($booking->status !== 'pending') {
+            return response()->json([
+                'message' => 'Booking sudah diproses'
+            ], 400);
+        }
+
+        $booking->update([
+            'status' => 'confirmed'
+        ]);
+
+        return response()->json([
+            'message' => 'Booking berhasil dikonfirmasi',
+            'data' => $booking
         ]);
     }
 }

@@ -81,6 +81,11 @@ Route::prefix('admin-basecamp')
     Route::get('/reports/pdf', [AdminBasecampReportController::class, 'downloadPdf']);
 });
 
+Route::patch(
+    '/bookings/{id}/confirm',
+    [AdminBasecampBookingController::class, 'confirm']
+);
+
 // Admin Gunung Routes 
 Route::prefix('admin-gunung')
 ->middleware(['auth:sanctum', 'role:admin_gunung'])
