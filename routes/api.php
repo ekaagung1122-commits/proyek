@@ -168,6 +168,16 @@ Route::prefix('user')
     Route::patch('/profile/change-password', [ProfileController::class, 'changePassword']);
 
     Route::post('/reviews', [ReviewController::class, 'store']);
+    Route::post('/requests', [
+        UserAdminRequestController::class,
+        'requestAdminGunung'
+    ]);
+
+    Route::get('/admin-requests', [
+        UserAdminRequestController::class,
+        'history'
+    ]);
+
 });
 
 // Notifications route  

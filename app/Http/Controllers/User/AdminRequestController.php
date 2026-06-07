@@ -63,4 +63,17 @@ class AdminRequestController extends Controller
             'data' => $data->load('documents')
         ]);
     }
+
+    public function history()
+{
+    $data = AdminRequest::where('user_id', auth()->id())
+        ->with('documents')
+        ->latest()
+        ->get();
+
+    return response()->json([
+        'message' => 'History admin request',
+        'data' => $data
+    ]);
+}
 }
