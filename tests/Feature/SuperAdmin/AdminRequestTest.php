@@ -45,7 +45,7 @@ class AdminRequestTest extends TestCase
         // Catatan: Jika di route list Anda menggunakan kata 'requests' (jamak), ganti url di bawah menjadi /requests/
         $response = $this->withHeaders([
             'Accept' => 'application/json',
-        ])->postJson("/api/super-admin/request/{$request->id}/approve");
+        ])->postJson("/api/super-admin/requests/{$request->id}/approve");
 
         $response->assertStatus(200)
                  ->assertJson([
@@ -78,7 +78,7 @@ class AdminRequestTest extends TestCase
 
         $response = $this->withHeaders([
             'Accept' => 'application/json',
-        ])->postJson("/api/super-admin/request/{$request->id}/reject", [
+        ])->postJson("/api/super-admin/requests/{$request->id}/reject", [
             'reason' => 'Dokumen tidak valid'
         ]);
 
@@ -108,7 +108,7 @@ class AdminRequestTest extends TestCase
 
         $response = $this->withHeaders([
             'Accept' => 'application/json',
-        ])->postJson("/api/super-admin/request/{$request->id}/reject", []);
+        ])->postJson("/api/super-admin/requests/{$request->id}/reject", []);
 
         $response->assertStatus(422);
     }
@@ -134,7 +134,7 @@ class AdminRequestTest extends TestCase
 
         $response = $this->withHeaders([
             'Accept' => 'application/json',
-        ])->postJson("/api/super-admin/request/{$request->id}/approve");
+        ])->postJson("/api/super-admin/requests/{$request->id}/approve");
 
         $response->assertStatus(200);
 

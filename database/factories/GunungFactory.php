@@ -23,6 +23,7 @@ class GunungFactory extends Factory
             'lokasi' => $this->faker->state() . ', Indonesia',
             'deskripsi' => $this->faker->paragraph(),
             'created_by' => User::factory(),
+            'ketinggian' => $this->faker->numberBetween(1000, 3676),
         ];
     }
 }
