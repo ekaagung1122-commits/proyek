@@ -16,6 +16,8 @@ class LoginTest extends TestCase
 
     public function test_user_can_login_successfully()
     {
+        $this->withoutExceptionHandling();
+        
         $role = Role::create(['name' => 'user']);
 
         $user = User::factory()->create([

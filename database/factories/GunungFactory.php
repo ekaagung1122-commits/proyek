@@ -16,9 +16,6 @@ class GunungFactory extends Factory
      *
      * @return array<string, mixed>
      */
-
-    protected $model = App\Models\Gunung::class;
-
     public function definition(): array
     {
         return [

@@ -17,7 +17,6 @@ class BasecampFactory extends Factory
      *
      * @return array<string, mixed>
      */
-    protected $model = App\Models\Basecamp::class;
 
     public function definition(): array
     {

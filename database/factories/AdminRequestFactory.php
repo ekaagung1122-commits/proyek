@@ -16,8 +16,6 @@ class AdminRequestFactory extends Factory
      *
      * @return array<string, mixed>
      */
-    protected $model = App\Models\AdminRequest::class;
-
     public function definition(): array
     {
         return [
