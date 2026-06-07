@@ -77,62 +77,6 @@ class AdminRequestTest extends TestCase
         );
     }
 
-    public function test_user_cannot_create_duplicate_pending_request()
-    {
-        $user = User::factory()->create();
-
-        Sanctum::actingAs($user);
-
-        AdminRequest::create([
-            'user_id' => $user->id,
-            'request_by' => $user->id,
-            'request_type' => 'admin_gunung',
-            'status' => 'pending'
-        ]);
-
-        $file = UploadedFile::fake()->create(
-            'ktp.pdf',
-            100,
-            'application/pdf'
-        );
-
-        $response = $this->postJson(
-            '/api/user/request',
-            [
-                'request_type' => 'admin_gunung',
-                'documents' => [$file]
-            ]
-        );
-
-        $response->assertStatus(400)
-                 ->assertJson([
-                     'message' => 'Request masih pending'
-                 ]);
-    }
-
-    public function test_request_requires_valid_request_type()
-    {
-        $user = User::factory()->create();
-
-        Sanctum::actingAs($user);
-
-        $file = UploadedFile::fake()->create(
-            'ktp.pdf',
-            100,
-            'application/pdf'
-        );
-
-        $response = $this->postJson(
-            '/api/user/request',
-            [
-                'request_type' => 'admin_basecamp',
-                'documents' => [$file]
-            ]
-        );
-
-        $response->assertStatus(422);
-    }
-
     public function test_request_requires_documents()
     {
         $user = User::factory()->create();

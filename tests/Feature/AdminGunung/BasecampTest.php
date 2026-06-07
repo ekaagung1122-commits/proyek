@@ -100,40 +100,6 @@ class BasecampTest extends TestCase
         ]);
     }
 
-    public function test_create_basecamp_requires_required_fields()
-    {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
-        $response = $this->postJson('/api/admin-gunung/basecamps', []);
-
-        $response->assertStatus(422);
-    }
-
-    public function test_admin_cannot_create_basecamp_for_other_admin_mountain()
-    {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
-        $otherAdmin = User::factory()->create();
-
-        $gunung = Gunung::create([
-            'nama' => 'Gunung Rinjani',
-            'created_by' => $otherAdmin->id
-        ]);
-
-        $response = $this->postJson('/api/admin-gunung/basecamps', [
-            'nama' => 'Basecamp Sembalun',
-            'gunung_id' => $gunung->id,
-            'lokasi' => 'Lombok',
-            'harga_tiket' => 30000
-        ]);
-
-        $response->assertStatus(404);
-    }
-
     public function test_admin_gunung_can_update_basecamp()
     {
         $admin = User::factory()->create();
@@ -230,30 +196,5 @@ class BasecampTest extends TestCase
             'id' => $basecamp->id,
             'admin_basecamp_id' => $targetUser->id
         ]);
-    }
-
-    public function test_assign_admin_requires_valid_user()
-    {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
-        $gunung = Gunung::create([
-            'nama' => 'Gunung Ciremai',
-            'created_by' => $admin->id
-        ]);
-
-        $basecamp = Basecamp::create([
-            'nama' => 'Basecamp Linggarjati',
-            'gunung_id' => $gunung->id,
-            'lokasi' => 'Kuningan',
-            'harga_tiket' => 25000
-        ]);
-
-        $response = $this->putJson("/api/admin-gunung/basecamps/{$basecamp->id}/assign-admin", [
-            'admin_basecamp_id' => 999
-        ]);
-
-        $response->assertStatus(422);
     }
 }

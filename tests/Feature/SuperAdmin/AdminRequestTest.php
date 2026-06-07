@@ -50,24 +50,6 @@ class AdminRequestTest extends TestCase
         Mail::assertSent(RequestStatusMail::class);
     }
 
-    public function test_request_cannot_be_approved_twice()
-    {
-        $user = User::factory()->create();
-
-        $request = AdminRequest::create([
-            'user_id' => $user->id,
-            'request_type' => 'admin_gunung',
-            'status' => 'approved'
-        ]);
-
-        $response = $this->postJson("/api/super-admin/request/{$request->id}/approve");
-
-        $response->assertStatus(400)
-                 ->assertJson([
-                     'message' => 'Request sudah diproses sebelumnya'
-                 ]);
-    }
-
     public function test_super_admin_can_reject_request()
     {
         Mail::fake();

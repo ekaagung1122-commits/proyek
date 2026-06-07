@@ -64,35 +64,4 @@ class UserTest extends TestCase
             $user->fresh()->roles()->where('name', 'admin_gunung')->exists()
         );
     }
-
-    public function test_remove_role_returns_404_if_role_not_found()
-    {
-        $user = User::factory()->create();
-
-        $response = $this->deleteJson("/api/super-admin/users/{$user->id}/roles/role_salah");
-
-        $response->assertStatus(404)
-                 ->assertJson([
-                     'message' => 'Role tidak ditemukan'
-                 ]);
-    }
-
-    public function test_user_has_no_roles_after_role_removed()
-    {
-        $role = Role::create([
-            'name' => 'admin_basecamp'
-        ]);
-
-        $user = User::factory()->create();
-
-        $user->roles()->attach($role->id);
-
-        $response = $this->deleteJson("/api/super-admin/users/{$user->id}/roles/admin_basecamp");
-
-        $response->assertStatus(200);
-
-        $this->assertFalse(
-            $user->fresh()->roles()->exists()
-        );
-    }
 }

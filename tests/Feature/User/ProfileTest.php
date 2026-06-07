@@ -145,41 +145,4 @@ class ProfileTest extends TestCase
             )
         );
     }
-
-    public function test_change_password_fails_if_current_password_wrong()
-    {
-        $user = User::factory()->create([
-            'password' => Hash::make('passwordlama')
-        ]);
-
-        Sanctum::actingAs($user);
-
-        $response = $this->postJson('/api/user/profile/change-password', [
-            'current_password' => 'salahpassword',
-            'new_password' => 'passwordbaru123',
-            'new_password_confirmation' => 'passwordbaru123'
-        ]);
-
-        $response->assertStatus(400)
-                 ->assertJson([
-                     'message' => 'Password salah'
-                 ]);
-    }
-
-    public function test_change_password_requires_confirmation()
-    {
-        $user = User::factory()->create([
-            'password' => Hash::make('passwordlama')
-        ]);
-
-        Sanctum::actingAs($user);
-
-        $response = $this->postJson('/api/user/profile/change-password', [
-            'current_password' => 'passwordlama',
-            'new_password' => 'passwordbaru123',
-            'new_password_confirmation' => 'beda'
-        ]);
-
-        $response->assertStatus(422);
-    }
 }

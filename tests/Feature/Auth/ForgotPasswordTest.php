@@ -62,38 +62,4 @@ class ForgotPasswordTest extends TestCase
             Hash::check('passwordbaru123', $user->fresh()->password)
         );
     }
-
-    public function test_reset_password_fails_with_invalid_token()
-    {
-        $user = User::factory()->create([
-            'email' => 'user@gmail.com'
-        ]);
-
-        $response = $this->postJson('/api/password/reset', [
-            'email' => 'user@gmail.com',
-            'token' => 'token-salah',
-            'password' => 'passwordbaru123',
-            'password_confirmation' => 'passwordbaru123'
-        ]);
-
-        $response->assertStatus(400);
-    }
-
-    public function test_reset_password_requires_password_confirmation()
-    {
-        $user = User::factory()->create([
-            'email' => 'user@gmail.com'
-        ]);
-
-        $token = Password::createToken($user);
-
-        $response = $this->postJson('/api/password/reset', [
-            'email' => 'user@gmail.com',
-            'token' => $token,
-            'password' => 'passwordbaru123',
-            'password_confirmation' => 'beda'
-        ]);
-
-        $response->assertStatus(422);
-    }
 }

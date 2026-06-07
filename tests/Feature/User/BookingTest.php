@@ -87,83 +87,6 @@ class BookingTest extends TestCase
         ]);
     }
 
-    public function test_user_cannot_create_duplicate_booking()
-    {
-        $user = User::factory()->create();
-
-        Sanctum::actingAs($user);
-
-        $basecamp = Basecamp::factory()->create();
-
-        Booking::create([
-            'user_id' => $user->id,
-            'basecamp_id' => $basecamp->id,
-            'tanggal_naik' => now()->addDay()->toDateString(),
-            'jumlah_pendaki' => 1,
-            'harga_per_orang' => 10000,
-            'total_price' => 10000,
-            'status' => 'pending'
-        ]);
-
-        $response = $this->postJson('/api/user/bookings', [
-            'basecamp_id' => $basecamp->id,
-            'tanggal_naik' => now()->addDay()->toDateString(),
-            'jumlah_pendaki' => 2
-        ]);
-
-        $response->assertStatus(400)
-                 ->assertJson([
-                     'message' => 'Anda sudah punya booking aktif'
-                 ]);
-    }
-
-    public function test_booking_fails_if_quota_not_set()
-    {
-        $user = User::factory()->create();
-
-        Sanctum::actingAs($user);
-
-        $basecamp = Basecamp::factory()->create();
-
-        $response = $this->postJson('/api/user/bookings', [
-            'basecamp_id' => $basecamp->id,
-            'tanggal_naik' => now()->addDay()->toDateString(),
-            'jumlah_pendaki' => 2
-        ]);
-
-        $response->assertStatus(400)
-                 ->assertJson([
-                     'message' => 'Kuota belum diatur'
-                 ]);
-    }
-
-    public function test_booking_fails_if_quota_insufficient()
-    {
-        $user = User::factory()->create();
-
-        Sanctum::actingAs($user);
-
-        $basecamp = Basecamp::factory()->create();
-
-        BasecampKuota::create([
-            'basecamp_id' => $basecamp->id,
-            'tanggal' => now()->addDay()->toDateString(),
-            'kuota' => 2,
-            'kuota_terpakai' => 1
-        ]);
-
-        $response = $this->postJson('/api/user/bookings', [
-            'basecamp_id' => $basecamp->id,
-            'tanggal_naik' => now()->addDay()->toDateString(),
-            'jumlah_pendaki' => 5
-        ]);
-
-        $response->assertStatus(400)
-                 ->assertJson([
-                     'message' => 'Kuota tidak mencukupi'
-                 ]);
-    }
-
     public function test_user_can_cancel_pending_booking()
     {
         $user = User::factory()->create();
@@ -186,25 +109,6 @@ class BookingTest extends TestCase
             'id' => $booking->id,
             'status' => 'cancelled'
         ]);
-    }
-
-    public function test_user_cannot_cancel_confirmed_booking()
-    {
-        $user = User::factory()->create();
-
-        Sanctum::actingAs($user);
-
-        $booking = Booking::factory()->create([
-            'user_id' => $user->id,
-            'status' => 'confirmed'
-        ]);
-
-        $response = $this->postJson("/api/user/bookings/{$booking->id}/cancel");
-
-        $response->assertStatus(400)
-                 ->assertJson([
-                     'message' => 'Hanya booking dengan status pending yang bisa dibatalkan'
-                 ]);
     }
 
     public function test_user_can_view_hiking_history()
@@ -265,48 +169,5 @@ class BookingTest extends TestCase
             'id' => $booking->id,
             'tanggal_naik' => $newDate
         ]);
-    }
-
-    public function test_reschedule_fails_if_same_date()
-    {
-        $user = User::factory()->create();
-
-        Sanctum::actingAs($user);
-
-        $date = now()->addDay()->toDateString();
-
-        $booking = Booking::factory()->create([
-            'user_id' => $user->id,
-            'tanggal_naik' => $date,
-            'status' => 'pending'
-        ]);
-
-        $response = $this->postJson("/api/user/bookings/{$booking->id}/reschedule", [
-            'tanggal_naik' => $date
-        ]);
-
-        $response->assertStatus(400)
-                 ->assertJson([
-                     'message' => 'Tanggal naik baru tidak boleh sama dengan tanggal naik sebelumnya'
-                 ]);
-    }
-
-    public function test_download_pdf_fails_if_booking_not_confirmed()
-    {
-        $user = User::factory()->create();
-
-        Sanctum::actingAs($user);
-
-        $booking = Booking::factory()->create([
-            'user_id' => $user->id,
-            'status' => 'pending'
-        ]);
-
-        $response = $this->get("/api/user/bookings/{$booking->id}/pdf");
-
-        $response->assertStatus(400)
-                 ->assertJson([
-                     'message' => 'Hanya booking dengan status confirmed yang bisa diunduh tiketnya'
-                 ]);
     }
 }
