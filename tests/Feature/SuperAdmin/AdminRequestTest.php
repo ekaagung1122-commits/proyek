@@ -10,28 +10,42 @@ use App\Models\AdminRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\RequestStatusMail;
+use Laravel\Sanctum\Sanctum;
 
 class AdminRequestTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        // Buat role super_admin dan bertindak sebagai Super Admin
+        $superAdminRole = Role::create(['name' => 'super_admin']);
+        $superAdmin = User::factory()->create();
+        $superAdmin->roles()->attach($superAdminRole->id);
+        
+        Sanctum::actingAs($superAdmin);
+    }
+
     public function test_super_admin_can_approve_admin_request()
     {
         Mail::fake();
 
-        $role = Role::create([
-            'name' => 'admin_gunung'
-        ]);
-
+        $role = Role::create(['name' => 'admin_gunung']);
         $user = User::factory()->create();
 
-        $request = AdminRequest::create([
+        // Menggunakan Factory agar kolom email dll aman terisi
+        $request = AdminRequest::factory()->create([
             'user_id' => $user->id,
             'request_type' => 'admin_gunung',
             'status' => 'pending'
         ]);
 
-        $response = $this->postJson("/api/super-admin/request/{$request->id}/approve");
+        // Catatan: Jika di route list Anda menggunakan kata 'requests' (jamak), ganti url di bawah menjadi /requests/
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson("/api/super-admin/request/{$request->id}/approve");
 
         $response->assertStatus(200)
                  ->assertJson([
@@ -56,13 +70,15 @@ class AdminRequestTest extends TestCase
 
         $user = User::factory()->create();
 
-        $request = AdminRequest::create([
+        $request = AdminRequest::factory()->create([
             'user_id' => $user->id,
             'request_type' => 'admin_gunung',
             'status' => 'pending'
         ]);
 
-        $response = $this->postJson("/api/super-admin/request/{$request->id}/reject", [
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson("/api/super-admin/request/{$request->id}/reject", [
             'reason' => 'Dokumen tidak valid'
         ]);
 
@@ -84,13 +100,15 @@ class AdminRequestTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $request = AdminRequest::create([
+        $request = AdminRequest::factory()->create([
             'user_id' => $user->id,
             'request_type' => 'admin_gunung',
             'status' => 'pending'
         ]);
 
-        $response = $this->postJson("/api/super-admin/request/{$request->id}/reject", []);
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson("/api/super-admin/request/{$request->id}/reject", []);
 
         $response->assertStatus(422);
     }
@@ -99,24 +117,24 @@ class AdminRequestTest extends TestCase
     {
         Mail::fake();
 
-        $role = Role::create([
-            'name' => 'admin_basecamp'
-        ]);
-
+        $role = Role::create(['name' => 'admin_basecamp']);
         $user = User::factory()->create();
 
-        $basecamp = Basecamp::create([
+        // Menggunakan Factory untuk membuat Basecamp (agar otomatis dapet gunung_id bawaan factory)
+        $basecamp = Basecamp::factory()->create([
             'nama' => 'Basecamp Ranu Pane'
         ]);
 
-        $request = AdminRequest::create([
+        $request = AdminRequest::factory()->create([
             'user_id' => $user->id,
             'request_type' => 'admin_basecamp',
             'status' => 'pending',
             'basecamp_id' => $basecamp->id
         ]);
 
-        $response = $this->postJson("/api/super-admin/request/{$request->id}/approve");
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson("/api/super-admin/request/{$request->id}/approve");
 
         $response->assertStatus(200);
 

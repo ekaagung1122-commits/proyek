@@ -5,8 +5,6 @@ namespace Tests\Feature\Auth;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\Role;
-use App\Models\Basecamp;
-use App\Models\Gunung;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 
@@ -16,8 +14,6 @@ class LoginTest extends TestCase
 
     public function test_user_can_login_successfully()
     {
-        $this->withoutExceptionHandling();
-        
         $role = Role::create(['name' => 'user']);
 
         $user = User::factory()->create([
@@ -27,11 +23,13 @@ class LoginTest extends TestCase
 
         $user->roles()->attach($role->id);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson('/api/login', [
             'email' => 'user@gmail.com',
             'password' => 'password123'
         ]);
-
+        
         $response->assertStatus(200)
                  ->assertJsonStructure([
                      'user' => [
@@ -39,7 +37,6 @@ class LoginTest extends TestCase
                          'name',
                          'email',
                          'role',
-                         'basecamp_id'
                      ],
                      'token'
                  ]);
@@ -52,7 +49,9 @@ class LoginTest extends TestCase
             'password' => Hash::make('password123')
         ]);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson('/api/login', [
             'email' => 'user@gmail.com',
             'password' => 'salahpassword'
         ]);

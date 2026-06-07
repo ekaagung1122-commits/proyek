@@ -4,8 +4,8 @@ namespace Tests\Feature\AdminGunung;
 
 use Tests\TestCase;
 use App\Models\User;
+use App\Models\Role;
 use App\Models\Gunung;
-use App\Models\GunungGaleri;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,46 +15,50 @@ class GunungTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected $admin;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Membuat role dan aktor admin_gunung agar lolos middleware CheckRole
+        $role = Role::create(['name' => 'admin_gunung']);
+        $this->admin = User::factory()->create();
+        $this->admin->roles()->attach($role->id);
+
+        Sanctum::actingAs($this->admin);
+    }
+
     public function test_admin_gunung_can_view_gunung_list()
     {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
-        Gunung::create([
+        Gunung::factory()->create([
             'nama' => 'Gunung Semeru',
-            'lokasi' => 'Jawa Timur',
-            'ketinggian' => 3676,
-            'created_by' => $admin->id,
-            'status' => 1
+            'created_by' => $this->admin->id
         ]);
 
-        $response = $this->getJson('/api/admin-gunung/gunungs');
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->getJson('/api/admin-gunung/gunungs');
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Daftar Gunung'
                  ]);
     }
 
     public function test_admin_gunung_can_view_gunung_detail()
     {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
-        $gunung = Gunung::create([
+        $gunung = Gunung::factory()->create([
             'nama' => 'Gunung Rinjani',
-            'lokasi' => 'Lombok',
-            'ketinggian' => 3726,
-            'created_by' => $admin->id,
-            'status' => 1
+            'created_by' => $this->admin->id
         ]);
 
-        $response = $this->getJson("/api/admin-gunung/gunungs/{$gunung->id}");
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->getJson("/api/admin-gunung/gunungs/{$gunung->id}");
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Detail Gunung'
                  ]);
     }
@@ -62,14 +66,11 @@ class GunungTest extends TestCase
     public function test_admin_gunung_can_create_gunung()
     {
         Storage::fake('public');
-
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
         $file = UploadedFile::fake()->image('gunung.jpg');
 
-        $response = $this->postJson('/api/admin-gunung/gunungs', [
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson('/api/admin-gunung/gunungs', [
             'nama' => 'Gunung Merbabu',
             'lokasi' => 'Jawa Tengah',
             'ketinggian' => 3145,
@@ -78,7 +79,7 @@ class GunungTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Gunung berhasil dibuat'
                  ]);
 
@@ -89,11 +90,9 @@ class GunungTest extends TestCase
 
     public function test_create_gunung_requires_required_fields()
     {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
-        $response = $this->postJson('/api/admin-gunung/gunungs', []);
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson('/api/admin-gunung/gunungs', []);
 
         $response->assertStatus(422);
     }
@@ -102,49 +101,37 @@ class GunungTest extends TestCase
     {
         Storage::fake('public');
 
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
-        $gunung = Gunung::create([
-            'nama' => 'Gunung Prau',
-            'lokasi' => 'Wonosobo',
-            'ketinggian' => 2565,
-            'created_by' => $admin->id,
-            'status' => 1
+        $gunung = Gunung::factory()->create([
+            'created_by' => $this->admin->id
         ]);
 
         $file = UploadedFile::fake()->image('new-gunung.jpg');
 
-        $response = $this->putJson("/api/admin-gunung/gunungs/{$gunung->id}", [
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->putJson("/api/admin-gunung/gunungs/{$gunung->id}", [
+            'nama' => $gunung->nama, // sertakan field required untuk update aman
+            'lokasi' => $gunung->lokasi,
+            'ketinggian' => $gunung->ketinggian,
             'foto_utama' => $file
         ]);
 
         $response->assertStatus(200);
-
-        $this->assertNotNull(
-            $gunung->fresh()->foto_utama
-        );
+        $this->assertNotNull($gunung->fresh()->foto_utama);
     }
 
     public function test_admin_gunung_can_delete_gunung()
     {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
-        $gunung = Gunung::create([
-            'nama' => 'Gunung Papandayan',
-            'lokasi' => 'Garut',
-            'ketinggian' => 2665,
-            'created_by' => $admin->id,
-            'status' => 1
+        $gunung = Gunung::factory()->create([
+            'created_by' => $this->admin->id
         ]);
 
-        $response = $this->deleteJson("/api/admin-gunung/gunungs/{$gunung->id}");
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->deleteJson("/api/admin-gunung/gunungs/{$gunung->id}");
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Gunung berhasil dihapus'
                  ]);
 
@@ -155,31 +142,29 @@ class GunungTest extends TestCase
 
     public function test_admin_gunung_can_add_galeri()
     {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
-        $gunung = Gunung::create([
-            'nama' => 'Gunung Gede',
-            'lokasi' => 'Jawa Barat',
-            'ketinggian' => 2958,
-            'created_by' => $admin->id,
-            'status' => 1
+        Storage::fake('public');
+        
+        $gunung = Gunung::factory()->create([
+            'created_by' => $this->admin->id
         ]);
 
-        $response = $this->postJson("/api/admin-gunung/gunungs/{$gunung->id}/galeri", [
-            'foto' => 'galeri1.jpg',
+        // Ubah string mentah menjadi File Upload palsu agar lolos validasi request image
+        $file = UploadedFile::fake()->image('galeri1.jpg');
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson("/api/admin-gunung/gunungs/{$gunung->id}/galeri", [
+            'foto' => $file,
             'caption' => 'Pemandangan indah'
         ]);
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Galeri berhasil ditambahkan'
                  ]);
 
         $this->assertDatabaseHas('gunung_galeris', [
-            'gunung_id' => $gunung->id,
-            'foto' => 'galeri1.jpg'
+            'gunung_id' => $gunung->id
         ]);
     }
 }

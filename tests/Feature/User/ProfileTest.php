@@ -20,7 +20,7 @@ class ProfileTest extends TestCase
 
         Sanctum::actingAs($user);
 
-        $response = $this->get('api/user/profile');
+        $response = $this->getJson('/api/user/profile');
 
         $response->assertStatus(200);
     }
@@ -41,7 +41,7 @@ class ProfileTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Profile berhasil diperbarui'
                  ]);
 
@@ -60,7 +60,7 @@ class ProfileTest extends TestCase
             'email' => 'user1@gmail.com'
         ]);
 
-        $user2 = User::factory()->create([
+        User::factory()->create([
             'email' => 'user2@gmail.com'
         ]);
 
@@ -84,17 +84,18 @@ class ProfileTest extends TestCase
 
         $file = UploadedFile::fake()->image('foto.jpg');
 
+        // Menggunakan post multipart biasa dengan header JSON untuk upload file
         $response = $this->post('/api/user/profile/foto', [
             'foto' => $file
-        ]);
+        ], ['Accept' => 'application/json']);
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Foto profil berhasil diunggah'
                  ]);
 
         $user->refresh();
-
+        $this->assertNotNull($user->foto);
         Storage::disk('public')->assertExists($user->foto);
     }
 
@@ -114,7 +115,7 @@ class ProfileTest extends TestCase
 
         $response = $this->post('/api/user/profile/foto', [
             'foto' => $file
-        ]);
+        ], ['Accept' => 'application/json']);
 
         $response->assertStatus(422);
     }
@@ -134,15 +135,10 @@ class ProfileTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Password berhasil diubah'
                  ]);
 
-        $this->assertTrue(
-            Hash::check(
-                'passwordbaru123',
-                $user->fresh()->password
-            )
-        );
+        $this->assertTrue(Hash::check('passwordbaru123', $user->fresh()->password));
     }
 }

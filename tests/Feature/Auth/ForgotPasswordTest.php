@@ -22,7 +22,9 @@ class ForgotPasswordTest extends TestCase
             'email' => 'user@gmail.com'
         ]);
 
-        $response = $this->postJson('/api/password/forgot', [
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson('/api/password/forgot', [
             'email' => 'user@gmail.com'
         ]);
 
@@ -33,7 +35,9 @@ class ForgotPasswordTest extends TestCase
 
     public function test_forgot_password_fails_if_email_not_found()
     {
-        $response = $this->postJson('/api/password/forgot', [
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson('/api/password/forgot', [
             'email' => 'tidakada@gmail.com'
         ]);
 
@@ -49,7 +53,9 @@ class ForgotPasswordTest extends TestCase
 
         $token = Password::createToken($user);
 
-        $response = $this->postJson('/api/password/reset', [
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson('/api/password/reset', [
             'email' => 'user@gmail.com',
             'token' => $token,
             'password' => 'passwordbaru123',

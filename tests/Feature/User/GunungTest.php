@@ -6,7 +6,6 @@ use Tests\TestCase;
 use App\Models\User;
 use App\Models\Gunung;
 use App\Models\GunungGaleri;
-use App\Models\Review;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class GunungTest extends TestCase
@@ -15,12 +14,12 @@ class GunungTest extends TestCase
 
     public function test_user_can_view_gunung_list()
     {
-        Gunung::factory()->count(3)->create();
+        Gunung::factory()->count(3)->create(['status' => 1]);
 
         $response = $this->getJson('/api/user/gunungs');
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Daftar Gunung'
                  ]);
     }
@@ -44,11 +43,8 @@ class GunungTest extends TestCase
         $response = $this->getJson('/api/user/gunungs?search=Semeru');
 
         $response->assertStatus(200);
-
-        $this->assertStringContainsString(
-            'Gunung Semeru',
-            $response->getContent()
-        );
+        $this->assertStringContainsString('Gunung Semeru', $response->getContent());
+        $this->assertStringNotContainsString('Gunung Merbabu', $response->getContent());
     }
 
     public function test_user_can_view_gunung_detail()
@@ -69,7 +65,7 @@ class GunungTest extends TestCase
         $response = $this->getJson("/api/user/gunungs/{$gunung->id}");
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Detail Gunung'
                  ]);
     }

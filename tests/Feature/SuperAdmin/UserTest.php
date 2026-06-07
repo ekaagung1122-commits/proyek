@@ -6,16 +6,31 @@ use Tests\TestCase;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 
 class UserTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        // Buat role super_admin dan login-kan aktor di setiap test
+        $superAdminRole = Role::create(['name' => 'super_admin']);
+        $superAdmin = User::factory()->create();
+        $superAdmin->roles()->attach($superAdminRole->id);
+        
+        Sanctum::actingAs($superAdmin);
+    }
+
     public function test_can_get_user_list()
     {
         User::factory()->count(3)->create();
 
-        $response = $this->getJson('/api/super-admin/users');
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->getJson('/api/super-admin/users');
 
         $response->assertStatus(200)
                  ->assertJsonStructure([
@@ -26,15 +41,13 @@ class UserTest extends TestCase
 
     public function test_super_admin_can_delete_user()
     {
-        $role = Role::create([
-            'name' => 'admin_gunung'
-        ]);
-
+        $role = Role::create(['name' => 'admin_gunung']);
         $user = User::factory()->create();
-
         $user->roles()->attach($role->id);
 
-        $response = $this->deleteJson("/api/super-admin/users/{$user->id}");
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->deleteJson("/api/super-admin/users/{$user->id}");
 
         $response->assertStatus(200)
                  ->assertJson([
@@ -48,15 +61,13 @@ class UserTest extends TestCase
 
     public function test_can_remove_role_from_user()
     {
-        $role = Role::create([
-            'name' => 'admin_gunung'
-        ]);
-
+        $role = Role::create(['name' => 'admin_gunung']);
         $user = User::factory()->create();
-
         $user->roles()->attach($role->id);
 
-        $response = $this->deleteJson("/api/super-admin/users/{$user->id}/roles/admin_gunung");
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->deleteJson("/api/super-admin/users/{$user->id}/roles/admin_gunung");
 
         $response->assertStatus(200);
 

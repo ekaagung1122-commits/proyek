@@ -4,6 +4,7 @@ namespace Tests\Feature\AdminGunung;
 
 use Tests\TestCase;
 use App\Models\User;
+use App\Models\Role;
 use App\Models\Gunung;
 use App\Models\Basecamp;
 use Illuminate\Http\UploadedFile;
@@ -15,54 +16,51 @@ class BasecampTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected $admin;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $role = Role::create(['name' => 'admin_gunung']);
+        $this->admin = User::factory()->create();
+        $this->admin->roles()->attach($role->id);
+
+        Sanctum::actingAs($this->admin);
+    }
+
     public function test_admin_gunung_can_view_basecamp_list()
     {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
-        $gunung = Gunung::create([
-            'nama' => 'Gunung Semeru',
-            'created_by' => $admin->id
-        ]);
-
-        Basecamp::create([
-            'nama' => 'Basecamp Ranu Pane',
+        $gunung = Gunung::factory()->create(['created_by' => $this->admin->id]);
+        Basecamp::factory()->create([
             'gunung_id' => $gunung->id,
-            'lokasi' => 'Lumajang',
-            'harga_tiket' => 15000
+            'nama' => 'Basecamp Ranu Pane'
         ]);
 
-        $response = $this->getJson('/api/admin-gunung/basecamps');
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->getJson('/api/admin-gunung/basecamps');
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Daftar Basecamp'
                  ]);
     }
 
     public function test_admin_gunung_can_view_basecamp_detail()
     {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
-        $gunung = Gunung::create([
-            'nama' => 'Gunung Merbabu',
-            'created_by' => $admin->id
-        ]);
-
-        $basecamp = Basecamp::create([
-            'nama' => 'Basecamp Selo',
+        $gunung = Gunung::factory()->create(['created_by' => $this->admin->id]);
+        $basecamp = Basecamp::factory()->create([
             'gunung_id' => $gunung->id,
-            'lokasi' => 'Boyolali',
-            'harga_tiket' => 20000
+            'nama' => 'Basecamp Selo'
         ]);
 
-        $response = $this->getJson("/api/admin-gunung/basecamps/{$basecamp->id}");
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->getJson("/api/admin-gunung/basecamps/{$basecamp->id}");
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Detail Basecamp'
                  ]);
     }
@@ -70,19 +68,12 @@ class BasecampTest extends TestCase
     public function test_admin_gunung_can_create_basecamp()
     {
         Storage::fake('public');
-
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
-        $gunung = Gunung::create([
-            'nama' => 'Gunung Slamet',
-            'created_by' => $admin->id
-        ]);
-
+        $gunung = Gunung::factory()->create(['created_by' => $this->admin->id]);
         $file = UploadedFile::fake()->image('basecamp.jpg');
 
-        $response = $this->postJson('/api/admin-gunung/basecamps', [
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson('/api/admin-gunung/basecamps', [
             'nama' => 'Basecamp Bambangan',
             'gunung_id' => $gunung->id,
             'lokasi' => 'Purbalingga',
@@ -91,7 +82,7 @@ class BasecampTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Basecamp berhasil dibuat'
                  ]);
 
@@ -102,28 +93,23 @@ class BasecampTest extends TestCase
 
     public function test_admin_gunung_can_update_basecamp()
     {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
-        $gunung = Gunung::create([
-            'nama' => 'Gunung Prau',
-            'created_by' => $admin->id
-        ]);
-
-        $basecamp = Basecamp::create([
-            'nama' => 'Basecamp Patak Banteng',
+        $gunung = Gunung::factory()->create(['created_by' => $this->admin->id]);
+        $basecamp = Basecamp::factory()->create([
             'gunung_id' => $gunung->id,
-            'lokasi' => 'Wonosobo',
-            'harga_tiket' => 15000
+            'nama' => 'Basecamp Patak Banteng'
         ]);
 
-        $response = $this->putJson("/api/admin-gunung/basecamps/{$basecamp->id}", [
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->putJson("/api/admin-gunung/basecamps/{$basecamp->id}", [
+            'nama' => $basecamp->nama, // sertakan field required lengkap
+            'gunung_id' => $basecamp->gunung_id,
+            'lokasi' => $basecamp->lokasi,
             'harga_tiket' => 20000
         ]);
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Basecamp berhasil diperbarui'
                  ]);
 
@@ -135,26 +121,15 @@ class BasecampTest extends TestCase
 
     public function test_admin_gunung_can_delete_basecamp()
     {
-        $admin = User::factory()->create();
+        $gunung = Gunung::factory()->create(['created_by' => $this->admin->id]);
+        $basecamp = Basecamp::factory()->create(['gunung_id' => $gunung->id]);
 
-        Sanctum::actingAs($admin);
-
-        $gunung = Gunung::create([
-            'nama' => 'Gunung Lawu',
-            'created_by' => $admin->id
-        ]);
-
-        $basecamp = Basecamp::create([
-            'nama' => 'Basecamp Cemoro Kandang',
-            'gunung_id' => $gunung->id,
-            'lokasi' => 'Karanganyar',
-            'harga_tiket' => 20000
-        ]);
-
-        $response = $this->deleteJson("/api/admin-gunung/basecamps/{$basecamp->id}");
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->deleteJson("/api/admin-gunung/basecamps/{$basecamp->id}");
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Basecamp berhasil dihapus'
                  ]);
 
@@ -165,30 +140,18 @@ class BasecampTest extends TestCase
 
     public function test_admin_gunung_can_assign_admin_basecamp()
     {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
         $targetUser = User::factory()->create();
+        $gunung = Gunung::factory()->create(['created_by' => $this->admin->id]);
+        $basecamp = Basecamp::factory()->create(['gunung_id' => $gunung->id]);
 
-        $gunung = Gunung::create([
-            'nama' => 'Gunung Papandayan',
-            'created_by' => $admin->id
-        ]);
-
-        $basecamp = Basecamp::create([
-            'nama' => 'Basecamp Camp David',
-            'gunung_id' => $gunung->id,
-            'lokasi' => 'Garut',
-            'harga_tiket' => 35000
-        ]);
-
-        $response = $this->putJson("/api/admin-gunung/basecamps/{$basecamp->id}/assign-admin", [
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->putJson("/api/admin-gunung/basecamps/{$basecamp->id}/assign-admin", [
             'admin_basecamp_id' => $targetUser->id
         ]);
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Admin Basecamp berhasil ditugaskan'
                  ]);
 

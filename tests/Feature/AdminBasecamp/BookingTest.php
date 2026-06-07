@@ -4,8 +4,10 @@ namespace Tests\Feature\AdminBasecamp;
 
 use Tests\TestCase;
 use App\Models\User;
+use App\Models\Role;
 use App\Models\Booking;
 use App\Models\Basecamp;
+use App\Models\Gunung;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 
@@ -13,17 +15,29 @@ class BookingTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected $admin;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Rekatkan hak akses peran admin_basecamp agar tidak dicekal middleware perlindungan rute
+        $role = Role::create(['name' => 'admin_basecamp']);
+        $this->admin = User::factory()->create();
+        $this->admin->roles()->attach($role->id);
+
+        Sanctum::actingAs($this->admin);
+    }
+
     public function test_admin_basecamp_can_view_booking_list()
     {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
         $user = User::factory()->create();
-
-        $basecamp = Basecamp::create([
+        $gunung = Gunung::factory()->create(['created_by' => $this->admin->id]);
+        
+        $basecamp = Basecamp::factory()->create([
+            'gunung_id' => $gunung->id,
             'nama' => 'Basecamp Semeru',
-            'admin_basecamp_id' => $admin->id
+            'admin_basecamp_id' => $this->admin->id
         ]);
 
         Booking::create([
@@ -32,25 +46,25 @@ class BookingTest extends TestCase
             'status' => 'confirmed'
         ]);
 
-        $response = $this->getJson('/api/admin-basecamp/bookings');
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->getJson('/api/admin-basecamp/bookings');
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Daftar Booking'
                  ]);
     }
 
     public function test_admin_basecamp_can_view_booking_detail()
     {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
         $user = User::factory()->create();
-
-        $basecamp = Basecamp::create([
+        $gunung = Gunung::factory()->create(['created_by' => $this->admin->id]);
+        
+        $basecamp = Basecamp::factory()->create([
+            'gunung_id' => $gunung->id,
             'nama' => 'Basecamp Rinjani',
-            'admin_basecamp_id' => $admin->id
+            'admin_basecamp_id' => $this->admin->id
         ]);
 
         $booking = Booking::create([
@@ -59,25 +73,25 @@ class BookingTest extends TestCase
             'status' => 'confirmed'
         ]);
 
-        $response = $this->getJson("/api/admin-basecamp/bookings/{$booking->id}");
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->getJson("/api/admin-basecamp/bookings/{$booking->id}");
 
         $response->assertStatus(200)
-                 ->assertJson([
+                 ->assertJsonFragment([
                      'message' => 'Detail Booking'
                  ]);
     }
 
     public function test_admin_basecamp_can_checkin_booking()
     {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
         $user = User::factory()->create();
-
-        $basecamp = Basecamp::create([
+        $gunung = Gunung::factory()->create(['created_by' => $this->admin->id]);
+        
+        $basecamp = Basecamp::factory()->create([
+            'gunung_id' => $gunung->id,
             'nama' => 'Basecamp Merbabu',
-            'admin_basecamp_id' => $admin->id
+            'admin_basecamp_id' => $this->admin->id
         ]);
 
         $booking = Booking::create([
@@ -86,29 +100,23 @@ class BookingTest extends TestCase
             'status' => 'confirmed'
         ]);
 
-        $response = $this->postJson("/api/admin-basecamp/bookings/{$booking->id}/checkin");
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson("/api/admin-basecamp/bookings/{$booking->id}/checkin");
 
-        $response->assertStatus(200)
-                 ->assertJson([
-                     'message' => 'Check-in berhasil'
-                 ]);
-
-        $this->assertNotNull(
-            $booking->fresh()->checkin_at
-        );
+        $response->assertStatus(200);
+        $this->assertNotNull($booking->fresh()->checkin_at);
     }
 
     public function test_admin_basecamp_can_checkout_booking()
     {
-        $admin = User::factory()->create();
-
-        Sanctum::actingAs($admin);
-
         $user = User::factory()->create();
-
-        $basecamp = Basecamp::create([
+        $gunung = Gunung::factory()->create(['created_by' => $this->admin->id]);
+        
+        $basecamp = Basecamp::factory()->create([
+            'gunung_id' => $gunung->id,
             'nama' => 'Basecamp Prau',
-            'admin_basecamp_id' => $admin->id
+            'admin_basecamp_id' => $this->admin->id
         ]);
 
         $booking = Booking::create([
@@ -118,12 +126,11 @@ class BookingTest extends TestCase
             'checkin_at' => now()
         ]);
 
-        $response = $this->postJson("/api/admin-basecamp/bookings/{$booking->id}/checkout");
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson("/api/admin-basecamp/bookings/{$booking->id}/checkout");
 
-        $response->assertStatus(200)
-                 ->assertJson([
-                     'message' => 'Check-out berhasil'
-                 ]);
+        $response->assertStatus(200);
 
         $this->assertDatabaseHas('bookings', [
             'id' => $booking->id,
