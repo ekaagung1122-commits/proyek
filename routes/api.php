@@ -55,144 +55,143 @@ Route::middleware(['auth:sanctum', 'role:admin_gunung,super_admin,admin_basecamp
 // Admin Basecamp Routes
 // belum ditest postman
 Route::prefix('admin-basecamp')
-->middleware(['auth:sanctum', 'role:admin_basecamp'])
-->group(function () {
-    Route::get('/bookings', [AdminBasecampBookingController::class, 'index']);
-    Route::get('/bookings/{id}', [AdminBasecampBookingController::class, 'show']);
-    Route::patch('/bookings/{id}/checkin', [AdminBasecampBookingController::class, 'checkin']);
-    Route::patch('/bookings/{id}/checkout', [AdminBasecampBookingController::class, 'checkout']);
+    ->middleware(['auth:sanctum', 'role:admin_basecamp'])
+    ->group(function () {
+        Route::get('/bookings', [AdminBasecampBookingController::class, 'index']);
+        Route::get('/bookings/{id}', [AdminBasecampBookingController::class, 'show']);
+        Route::patch('/bookings/{id}/checkin', [AdminBasecampBookingController::class, 'checkin']);
+        Route::patch('/bookings/{id}/checkout', [AdminBasecampBookingController::class, 'checkout']);
 
-    Route::get('/basecamps/{basecampId}/kuotas', [KuotaController::class, 'index']);
-    Route::get('/basecamps/{basecampId}/kuotas/{id}', [KuotaController::class, 'show']);
-    Route::post('/basecamps/{basecampId}/kuotas', [ KuotaController::class, 'store']);
-    Route::put('/basecamps/{basecampId}/kuotas/{id}', [KuotaController::class, 'update']);
-    Route::delete('/basecamps/{basecampId}/kuotas/{id}', [KuotaController::class, 'destroy']);
-    
-    Route::get('/basecamps/{basecampId}/jalurs', [JalurController::class, 'index']);
-    Route::get('/basecamps/{basecampId}/jalurs/{id}', [JalurController::class, 'show']);
-    Route::post('/basecamps/{basecampId}/jalurs', [JalurController::class, 'store']);
-    Route::put('/basecamps/{basecampId}/jalurs/{id}', [JalurController::class, 'update']);
-    Route::delete('/basecamps/{basecampId}/jalurs/{id}', [JalurController::class, 'destroy']);
+        Route::get('/basecamps/{basecampId}/kuotas', [KuotaController::class, 'index']);
+        Route::get('/basecamps/{basecampId}/kuotas/{id}', [KuotaController::class, 'show']);
+        Route::post('/basecamps/{basecampId}/kuotas', [KuotaController::class, 'store']);
+        Route::put('/basecamps/{basecampId}/kuotas/{id}', [KuotaController::class, 'update']);
+        Route::delete('/basecamps/{basecampId}/kuotas/{id}', [KuotaController::class, 'destroy']);
 
-    Route::get('/dashboard', [AdminBasecampDashboardController::class, 'index']);
-    Route::get('/dashboard/charts', [AdminBasecampDashboardController::class, 'chart']);
-    
-    Route::get('/reports', [AdminBasecampReportController::class, 'index']);
-    Route::get('/reports/pdf', [AdminBasecampReportController::class, 'downloadPdf']);
-});
+        Route::get('/basecamps/{basecampId}/jalurs', [JalurController::class, 'index']);
+        Route::get('/basecamps/{basecampId}/jalurs/{id}', [JalurController::class, 'show']);
+        Route::post('/basecamps/{basecampId}/jalurs', [JalurController::class, 'store']);
+        Route::put('/basecamps/{basecampId}/jalurs/{id}', [JalurController::class, 'update']);
+        Route::delete('/basecamps/{basecampId}/jalurs/{id}', [JalurController::class, 'destroy']);
 
-Route::patch(
-    '/bookings/{id}/confirm',
-    [AdminBasecampBookingController::class, 'confirm']
-);
+        Route::get('/dashboard', [AdminBasecampDashboardController::class, 'index']);
+        Route::get('/dashboard/charts', [AdminBasecampDashboardController::class, 'chart']);
+
+        Route::get('/reports', [AdminBasecampReportController::class, 'index']);
+        Route::get('/reports/pdf', [AdminBasecampReportController::class, 'downloadPdf']);
+
+        Route::patch(
+            '/bookings/{id}/confirm',
+            [AdminBasecampBookingController::class, 'confirm']
+        );
+    });
 
 // Admin Gunung Routes 
 Route::prefix('admin-gunung')
-->middleware(['auth:sanctum', 'role:admin_gunung'])
-->group(function () {
-    Route::post('/requests', [AdminGunungAdminRequestController::class, 'requestAdminBasecamp']);
-    Route::get('/requests', [AdminGunungAdminRequestController::class, 'index']);
+    ->middleware(['auth:sanctum', 'role:admin_gunung'])
+    ->group(function () {
+        Route::post('/requests', [AdminGunungAdminRequestController::class, 'requestAdminBasecamp']);
+        Route::get('/requests', [AdminGunungAdminRequestController::class, 'index']);
 
-    Route::get('/gunungs', [AdminGunungGunungController::class, 'index']);  
-    Route::get('/gunungs/{id}', [AdminGunungGunungController::class, 'show']);
-    Route::post('/gunungs', [AdminGunungGunungController::class, 'store']);
-    Route::put('/gunungs/{id}', [AdminGunungGunungController::class, 'update']);
-    Route::delete('/gunungs/{id}', [AdminGunungGunungController::class, 'destroy']);
-    Route::post('/gunungs/{id}/galeri', [AdminGunungGunungController::class, 'tambahGaleri']);
+        Route::get('/gunungs', [AdminGunungGunungController::class, 'index']);
+        Route::get('/gunungs/{id}', [AdminGunungGunungController::class, 'show']);
+        Route::post('/gunungs', [AdminGunungGunungController::class, 'store']);
+        Route::put('/gunungs/{id}', [AdminGunungGunungController::class, 'update']);
+        Route::delete('/gunungs/{id}', [AdminGunungGunungController::class, 'destroy']);
+        Route::post('/gunungs/{id}/galeri', [AdminGunungGunungController::class, 'tambahGaleri']);
 
-    // belum ditest postman
-    Route::get('/basecamps', [BasecampController::class, 'index']);
-    Route::get('/basecamps/{id}', [BasecampController::class, 'show']);
-    Route::post('/basecamps', [BasecampController::class, 'store']);
-    Route::put('/basecamps/{id}', [BasecampController::class, 'update']);
-    Route::delete('/basecamps/{id}', [BasecampController::class, 'destroy']);
-    Route::patch('/basecamps/{id}/assign-admin', [BasecampController::class, 'assignAdminBasecamp']);
+        // belum ditest postman
+        Route::get('/basecamps', [BasecampController::class, 'index']);
+        Route::get('/basecamps/{id}', [BasecampController::class, 'show']);
+        Route::post('/basecamps', [BasecampController::class, 'store']);
+        Route::put('/basecamps/{id}', [BasecampController::class, 'update']);
+        Route::delete('/basecamps/{id}', [BasecampController::class, 'destroy']);
+        Route::patch('/basecamps/{id}/assign-admin', [BasecampController::class, 'assignAdminBasecamp']);
 
-    // belum ditest postman
-    Route::get('/reports', [ReportController::class, 'index']);
-    Route::get('/reports/pdf', [ReportController::class, 'downloadPdf']);
+        // belum ditest postman
+        Route::get('/reports', [ReportController::class, 'index']);
+        Route::get('/reports/pdf', [ReportController::class, 'downloadPdf']);
 
-    // belum ditest postman
-    Route::get('/dashboard', [AdminGunungDashboardController::class, 'index']);
-    Route::get('/dashboard/charts', [AdminGunungDashboardController::class, 'chart']);
-}); 
+        // belum ditest postman
+        Route::get('/dashboard', [AdminGunungDashboardController::class, 'index']);
+        Route::get('/dashboard/charts', [AdminGunungDashboardController::class, 'chart']);
+    });
 
 // Super Admin Routes
 Route::prefix('super-admin')
-->middleware(['auth:sanctum', 'role:super_admin'])
-->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index']);
-    Route::get('/dashboard/charts', [DashboardController::class, 'chart']); //blm di test
+    ->middleware(['auth:sanctum', 'role:super_admin'])
+    ->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index']);
+        Route::get('/dashboard/charts', [DashboardController::class, 'chart']); //blm di test
 
-    Route::get('/requests', [AdminRequestController::class, 'index']);
-    Route::post('/requests/{id}/approve', [AdminRequestController::class, 'approve']);
-    Route::post('/requests/{id}/reject', [AdminRequestController::class, 'reject']);
+        Route::get('/requests', [AdminRequestController::class, 'index']);
+        Route::post('/requests/{id}/approve', [AdminRequestController::class, 'approve']);
+        Route::post('/requests/{id}/reject', [AdminRequestController::class, 'reject']);
 
-    Route::get('/users', [UserController::class, 'index']);
-    Route::delete('/users/{id}', [UserController::class, 'destroy']);
-    Route::delete('/users/{id}/roles/{role}', [UserController::class, 'removeRole']); 
+        Route::get('/users', [UserController::class, 'index']);
+        Route::delete('/users/{id}', [UserController::class, 'destroy']);
+        Route::delete('/users/{id}/roles/{role}', [UserController::class, 'removeRole']);
 
-    Route::get('/gunungs', [SuperAdminGunungController::class, 'index']); 
+        Route::get('/gunungs', [SuperAdminGunungController::class, 'index']);
 
-    // belum ditest postman
-    Route::get('/activity-logs', [ActivityLogController::class, 'index']);
-});
+        // belum ditest postman
+        Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+    });
 
 
 // User Routes
 Route::prefix('user')
-->group(function () {
-    Route::get('/gunungs', [UserGunungController::class, 'index']);
-    Route::get('/gunungs/{id}', [UserGunungController::class, 'show']);
+    ->group(function () {
+        Route::get('/gunungs', [UserGunungController::class, 'index']);
+        Route::get('/gunungs/{id}', [UserGunungController::class, 'show']);
 
-    Route::get('/gunungs/{gunungId}/reviews', [ReviewController::class, 'gunungReviews']);
-});
+        Route::get('/gunungs/{gunungId}/reviews', [ReviewController::class, 'gunungReviews']);
+    });
 
 Route::prefix('user')
-->middleware(['auth:sanctum'])
-->group(function () {
-    Route::get('/requests', [UserAdminRequestController::class, 'index']);
-    Route::post('/requests', [UserAdminRequestController::class, 'requestAdminGunung']);
+    ->middleware(['auth:sanctum'])
+    ->group(function () {
+        Route::get('/requests', [UserAdminRequestController::class, 'index']);
+        Route::post('/requests', [UserAdminRequestController::class, 'requestAdminGunung']);
 
-    // belum ditest postman
-    Route::get('/bookings', [BookingController::class, 'index']);
-    Route::get('/bookings/history', [BookingController::class, 'history']);
-    Route::get('/bookings/{id}', [BookingController::class, 'show']);
-    Route::post('/bookings', [BookingController::class, 'store']);
-    Route::patch('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
-    Route::patch('/bookings/{id}/reschedule', [BookingController::class, 'reschedule']);
-    Route::get('/bookings/{id}/pdf', [BookingController::class, 'downloadPdf']);
+        // belum ditest postman
+        Route::get('/bookings', [BookingController::class, 'index']);
+        Route::get('/bookings/history', [BookingController::class, 'history']);
+        Route::get('/bookings/{id}', [BookingController::class, 'show']);
+        Route::post('/bookings', [BookingController::class, 'store']);
+        Route::patch('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
+        Route::patch('/bookings/{id}/reschedule', [BookingController::class, 'reschedule']);
+        Route::get('/bookings/{id}/pdf', [BookingController::class, 'downloadPdf']);
 
-    Route::get('/profile', [ProfileController::class, 'show']);
-    Route::put('/profile', [ProfileController::class, 'update']);
-    Route::patch('/profile/foto', [ProfileController::class, 'uploadFoto']);
-    Route::patch('/profile/change-password', [ProfileController::class, 'changePassword']);
+        Route::get('/profile', [ProfileController::class, 'show']);
+        Route::put('/profile', [ProfileController::class, 'update']);
+        Route::patch('/profile/foto', [ProfileController::class, 'uploadFoto']);
+        Route::patch('/profile/change-password', [ProfileController::class, 'changePassword']);
 
-    Route::post('/reviews', [ReviewController::class, 'store']);
-    Route::post('/requests', [
-        UserAdminRequestController::class,
-        'requestAdminGunung'
-    ]);
+        Route::post('/reviews', [ReviewController::class, 'store']);
 
-    Route::get('/admin-requests', [
-        UserAdminRequestController::class,
-        'history'
-    ]);
-
-});
+        Route::get('/admin-requests', [
+            UserAdminRequestController::class,
+            'history'
+        ]);
+        Route::delete('/admin-requests/{id}', [
+            UserAdminRequestController::class,
+            'cancel'
+        ]);
+    });
 
 // Notifications route  
 // belum ditest postman
 Route::prefix('notifications')
-->middleware(['auth:sanctum'])
-->group(function () {
-    Route::get('/', [NotificationController::class, 'index']);
-    Route::post('/{id}/read', [NotificationController::class, 'read']);
-    Route::post('/{id}/unread', [NotificationController::class, 'unread']);
-    Route::post('/read-all', [NotificationController::class, 'readAll']);
-    Route::delete('/{id}', [NotificationController::class, 'destroy']);
-    Route::delete('/clear-all', [NotificationController::class, 'clearAll']);
-});
+    ->middleware(['auth:sanctum'])
+    ->group(function () {
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::post('/{id}/read', [NotificationController::class, 'read']);
+        Route::post('/{id}/unread', [NotificationController::class, 'unread']);
+        Route::post('/read-all', [NotificationController::class, 'readAll']);
+        Route::delete('/{id}', [NotificationController::class, 'destroy']);
+        Route::delete('/clear-all', [NotificationController::class, 'clearAll']);
+    });
 
 // Midtrans route
 // belum ditest postman
@@ -200,13 +199,13 @@ Route::post('/payment/callback', [PaymentCallbackController::class, 'handle']);
 
 //basecamp
 Route::prefix('user')
-->group(function () {
+    ->group(function () {
 
-    Route::get('/gunungs', [UserGunungController::class, 'index']);
-    Route::get('/gunungs/{id}', [UserGunungController::class, 'show']);
+        Route::get('/gunungs', [UserGunungController::class, 'index']);
+        Route::get('/gunungs/{id}', [UserGunungController::class, 'show']);
 
-    Route::get('/basecamps', [UserBasecampController::class, 'index']);
-    Route::get('/basecamps/{id}', [UserBasecampController::class, 'show']);
+        Route::get('/basecamps', [UserBasecampController::class, 'index']);
+        Route::get('/basecamps/{id}', [UserBasecampController::class, 'show']);
 
-    Route::get('/gunungs/{gunungId}/reviews', [ReviewController::class, 'gunungReviews']);
-});
+        Route::get('/gunungs/{gunungId}/reviews', [ReviewController::class, 'gunungReviews']);
+    });

@@ -76,4 +76,29 @@ class AdminRequestController extends Controller
         'data' => $data
     ]);
 }
+
+public function cancel($id)
+{
+    $request = AdminRequest::where('id', $id)
+        ->where('request_by', auth()->id())
+        ->first();
+
+    if (!$request) {
+        return response()->json([
+            'message' => 'Pengajuan tidak ditemukan'
+        ], 404);
+    }
+
+    if ($request->status !== 'pending') {
+        return response()->json([
+            'message' => 'Hanya pengajuan pending yang bisa dibatalkan'
+        ], 400);
+    }
+
+    $request->delete();
+
+    return response()->json([
+        'message' => 'Pengajuan berhasil dibatalkan'
+    ]);
+}
 }
