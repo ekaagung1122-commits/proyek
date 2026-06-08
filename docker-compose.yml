@@ -22,7 +22,7 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: rootpassword
     volumes:
-      - db_data:/var/lib/mysql
+      - pendakian_db_data:/var/lib/mysql
 
 volumes:
-  db_data:
+  pendakian_db_data:
