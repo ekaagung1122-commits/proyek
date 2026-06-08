@@ -69,8 +69,6 @@ class BookingTest extends TestCase
 
     public function test_user_can_create_booking()
     {
-        $this->withoutExceptionHandling();
-        
         $user = User::factory()->create();
         Sanctum::actingAs($user);
 
@@ -94,6 +92,8 @@ class BookingTest extends TestCase
             'tanggal_naik' => $tanggalNaik,
             'jumlah_pendaki' => 2
         ]);
+
+        $response->dump();
 
         $this->assertTrue(in_array($response->getStatusCode(), [200, 201]));
 
