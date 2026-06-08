@@ -72,7 +72,18 @@ class AdminRequestController extends Controller
             'reason' => 'Pengajuan telah disetujui',
         ]);
 
-        Mail::to($targetUser->email)->send(new RequestStatusMail($req, $targetUser));
+        if (!empty($req->email)) {
+
+            Mail::to($req->email)->send(new RequestStatusMail($req, $targetUser));
+
+        } else {
+            \Log::warning("Kolom email pada request ID " . $req->id . " ternyata kosong.");
+        }
+
+        $req->update([
+            'status' => 'approved',
+            'reason' => 'Pengajuan telah disetujui',
+        ]);
 
         logActivity(
             'approve',
