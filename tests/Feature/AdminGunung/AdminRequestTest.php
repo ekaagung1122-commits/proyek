@@ -30,9 +30,14 @@ class AdminRequestTest extends TestCase
 
     public function test_admin_gunung_can_view_requests()
     {
-        // Pastikan kolom pengait factory disesuaikan dengan skema database Anda (user_id atau request_by)
+        $basecamp = Basecamp::factory()->create();
+
+        // Diubah menggunakan request_by dan menyuplai data email tiruan agar tidak memicu NOT NULL constraint user_id
         AdminRequest::factory()->count(3)->create([
-            'user_id' => $this->admin->id 
+            'request_by' => $this->admin->id,
+            'email' => 'pendaki@example.com',
+            'basecamp_id' => $basecamp->id,
+            'request_type' => 'admin_basecamp'
         ]);
 
         $response = $this->withHeaders([
@@ -54,7 +59,6 @@ class AdminRequestTest extends TestCase
         $response = $this->withHeaders([
             'Accept' => 'application/json',
         ])->postJson('/api/admin-gunung/requests', [
-            'user_id' => $targetUser->id,
             'basecamp_id' => $basecamp->id,
             'email' => $targetUser->email
         ]);
@@ -64,8 +68,10 @@ class AdminRequestTest extends TestCase
                      'message' => 'Request admin basecamp berhasil dibuat'
                  ]);
 
+        // Dipastikan memeriksa berdasarkan kolom email & basecamp_id sesuai logika baru Controller kamu
         $this->assertDatabaseHas('admin_requests', [
-            'user_id' => $targetUser->id,
+            'email' => $targetUser->email,
+            'basecamp_id' => $basecamp->id,
             'request_type' => 'admin_basecamp',
             'status' => 'pending'
         ]);
