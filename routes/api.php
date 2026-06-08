@@ -151,6 +151,7 @@ Route::prefix('user')
 Route::prefix('user')
 ->middleware(['auth:sanctum'])
 ->group(function () {
+    Route::get('/requests', [UserAdminRequestController::class, 'index']);
     Route::post('/requests', [UserAdminRequestController::class, 'requestAdminGunung']);
 
     // belum ditest postman

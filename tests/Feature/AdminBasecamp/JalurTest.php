@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Gunung;
 use App\Models\Basecamp;
-use App\Models\Jalur; // Memastikan model ter-import dengan benar
+use App\Models\Jalur;   
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Illuminate\Http\UploadedFile;

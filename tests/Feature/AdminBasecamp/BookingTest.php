@@ -47,7 +47,7 @@ class BookingTest extends TestCase
             'jumlah_pendaki' => 3,
             'total_price' => 75000,
             'status' => 'confirmed',
-            'checkout_by' => null // Pastikan diisi null jika migration mengizinkan, atau gunakan $this->admin->id jika wajib
+            'checkout_by' => $this->admin->id // Mengubah null menjadi ID admin agar lolos NOT NULL constraint
         ]);
 
         $response = $this->withHeaders([
@@ -79,7 +79,7 @@ class BookingTest extends TestCase
             'jumlah_pendaki' => 2,
             'total_price' => 50000,
             'status' => 'confirmed',
-            'checkout_by' => null
+            'checkout_by' => $this->admin->id // Mengubah null menjadi ID admin
         ]);
 
         $response = $this->withHeaders([
@@ -111,7 +111,7 @@ class BookingTest extends TestCase
             'jumlah_pendaki' => 4,
             'total_price' => 100000,
             'status' => 'confirmed',
-            'checkout_by' => null
+            'checkout_by' => $this->admin->id // Mengubah null menjadi ID admin
         ]);
 
         $response = $this->withHeaders([
@@ -142,7 +142,7 @@ class BookingTest extends TestCase
             'total_price' => 25000,
             'status' => 'confirmed',
             'checkin_at' => now(),
-            'checkout_by' => null
+            'checkout_by' => $this->admin->id // Mengubah null menjadi ID admin
         ]);
 
         $response = $this->withHeaders([

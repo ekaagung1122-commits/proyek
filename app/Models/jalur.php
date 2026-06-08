@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class jalur extends Model
+class Jalur extends Model
 {
     protected $fillable = [
         'basecamp_id',
