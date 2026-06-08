@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Gunung;
 use App\Models\Basecamp;
-use App\Models\Jalur;
+use App\Models\Jalur; // Memastikan model ter-import dengan benar
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Illuminate\Http\UploadedFile;
@@ -92,15 +92,14 @@ class JalurTest extends TestCase
 
         $file = UploadedFile::fake()->image('jalur.jpg');
 
-        $response = $this->withHeaders([
-            'Accept' => 'application/json',
-        ])->postJson("/api/admin-basecamp/basecamps/{$basecamp->id}/jalurs", [
+        // Menggunakan POST untuk memastikan data form-data multipart/gambar terbaca dengan baik
+        $response = $this->post("/api/admin-basecamp/basecamps/{$basecamp->id}/jalurs", [
             'nama_jalur' => 'Jalur Bambangan',
             'estimasi_waktu' => 7,
             'status' => 'buka',
             'deskripsi' => 'Jalur favorit pendaki',
             'foto_utama' => $file
-        ]);
+        ], ['Accept' => 'application/json']);
 
         $this->assertTrue(in_array($response->getStatusCode(), [200, 201]));
 
@@ -129,15 +128,15 @@ class JalurTest extends TestCase
 
         $file = UploadedFile::fake()->image('update.jpg');
 
-        $response = $this->withHeaders([
-            'Accept' => 'application/json',
-        ])->putJson("/api/admin-basecamp/basecamps/{$basecamp->id}/jalurs/{$jalur->id}", [
+        // Menggunakan POST dengan penimpaan metode spoofing _method PUT demi kelancaran parsing file upload di Laravel
+        $response = $this->post("/api/admin-basecamp/basecamps/{$basecamp->id}/jalurs/{$jalur->id}", [
+            '_method' => 'PUT',
             'nama_jalur' => 'Jalur Baru',
             'estimasi_waktu' => 6,
             'status' => 'tutup',
             'deskripsi' => 'Sedang perbaikan',
             'foto_utama' => $file
-        ]);
+        ], ['Accept' => 'application/json']);
 
         $response->assertStatus(200);
 

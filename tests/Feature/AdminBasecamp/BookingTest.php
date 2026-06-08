@@ -21,7 +21,6 @@ class BookingTest extends TestCase
     {
         parent::setUp();
 
-        // Rekatkan hak akses peran admin_basecamp agar tidak dicekal middleware perlindungan rute
         $role = Role::create(['name' => 'admin_basecamp']);
         $this->admin = User::factory()->create();
         $this->admin->roles()->attach($role->id);
@@ -44,10 +43,11 @@ class BookingTest extends TestCase
             'user_id' => $user->id,
             'basecamp_id' => $basecamp->id,
             'order_id' => 'BK-TEST001',
-            'tanggal_naik' => now()->addDays(5)->format('Y-m-d'), // Diperbarui dari tanggal_mendaki
+            'tanggal_naik' => now()->addDays(5)->format('Y-m-d'),
             'jumlah_pendaki' => 3,
             'total_price' => 75000,
-            'status' => 'confirmed'
+            'status' => 'confirmed',
+            'checkout_by' => null // Pastikan diisi null jika migration mengizinkan, atau gunakan $this->admin->id jika wajib
         ]);
 
         $response = $this->withHeaders([
@@ -75,10 +75,11 @@ class BookingTest extends TestCase
             'user_id' => $user->id,
             'basecamp_id' => $basecamp->id,
             'order_id' => 'BK-TEST002',
-            'tanggal_naik' => now()->addDays(5)->format('Y-m-d'), // Diperbarui dari tanggal_mendaki
+            'tanggal_naik' => now()->addDays(5)->format('Y-m-d'),
             'jumlah_pendaki' => 2,
             'total_price' => 50000,
-            'status' => 'confirmed'
+            'status' => 'confirmed',
+            'checkout_by' => null
         ]);
 
         $response = $this->withHeaders([
@@ -106,10 +107,11 @@ class BookingTest extends TestCase
             'user_id' => $user->id,
             'basecamp_id' => $basecamp->id,
             'order_id' => 'BK-TEST003',
-            'tanggal_naik' => now()->addDays(5)->format('Y-m-d'), // Diperbarui dari tanggal_mendaki
+            'tanggal_naik' => now()->addDays(5)->format('Y-m-d'),
             'jumlah_pendaki' => 4,
             'total_price' => 100000,
-            'status' => 'confirmed'
+            'status' => 'confirmed',
+            'checkout_by' => null
         ]);
 
         $response = $this->withHeaders([
@@ -135,11 +137,12 @@ class BookingTest extends TestCase
             'user_id' => $user->id,
             'basecamp_id' => $basecamp->id,
             'order_id' => 'BK-TEST004',
-            'tanggal_naik' => now()->addDays(5)->format('Y-m-d'), // Diperbarui dari tanggal_mendaki
+            'tanggal_naik' => now()->addDays(5)->format('Y-m-d'),
             'jumlah_pendaki' => 1,
             'total_price' => 25000,
             'status' => 'confirmed',
-            'checkin_at' => now()
+            'checkin_at' => now(),
+            'checkout_by' => null
         ]);
 
         $response = $this->withHeaders([
