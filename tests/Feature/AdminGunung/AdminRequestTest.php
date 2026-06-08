@@ -32,7 +32,6 @@ class AdminRequestTest extends TestCase
     {
         $basecamp = Basecamp::factory()->create();
 
-        // Diubah menggunakan request_by dan menyuplai data email tiruan agar tidak memicu NOT NULL constraint user_id
         AdminRequest::factory()->count(3)->create([
             'request_by' => $this->admin->id,
             'email' => 'pendaki@example.com',
