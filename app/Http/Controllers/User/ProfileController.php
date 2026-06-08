@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\User;
 
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -24,13 +25,25 @@ class ProfileController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
             'alamat' => 'nullable|string|max:255',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
+
+        if ($request->hasFile('foto')) {
+
+            if ($user->foto) {
+                Storage::disk('public')->delete($user->foto);
+            }
+
+            $validatedData['foto'] = $request
+                ->file('foto')
+                ->store('profiles', 'public');
+        }
 
         $user->update($validatedData);
 
         return response()->json([
             'message' => 'Profile berhasil diperbarui',
-            'data' => $user->fresh(),
+            'user' => $user->fresh(),
         ]);
     }
 
@@ -38,7 +51,7 @@ class ProfileController extends Controller
     {
         $user = auth()->user();
 
-        $request->validate()([
+        $request->validate([
             'foto' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -80,5 +93,5 @@ class ProfileController extends Controller
         return response()->json([
             'message' => 'Password berhasil diubah'
         ]);
-    }   
+    }
 }
