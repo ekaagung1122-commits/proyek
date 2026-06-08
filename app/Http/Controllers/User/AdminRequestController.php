@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\User;
 
-use App\MOdels\AdminRequest;
+use App\Models\AdminRequest;
 use App\Models\AdminRequestDocument;
 
 use App\Http\Controllers\Controller;
