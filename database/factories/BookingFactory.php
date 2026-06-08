@@ -20,26 +20,17 @@ class BookingFactory extends Factory
     public function definition(): array
     {
         return [
-            // Menghubungkan booking dengan user (pendaki) secara otomatis
-            'user_id' => User::factory(),
-            
-            // Menghubungkan booking dengan basecamp secara otomatis
-            'basecamp_id' => Basecamp::factory(),
-            
-            // Kode booking unik, contoh: BK-20260608-XYZ12
-            'order_id' => 'BK-' . now()->format('Ymd') . '-' . strtoupper($this->faker->unique()->bothify('??##')),
-            
-            // Tanggal mendaki (misal antara besok sampai 1 bulan ke depan)
-            'tanggal_naik' => $this->faker->dateTimeBetween('+1 day', '+1 month')->format('Y-m-d'),
-            
-            // Jumlah anggota kelompok pendaki
-            'jumlah_pendaki' => $this->faker->numberBetween(1, 10),
-            
-            // Total harga bayar
-            'total_price' => $this->faker->numberBetween(50000, 250000),
-            
-            // Status booking secara default saat dibuat untuk testing
-            'status' => $this->faker->randomElement(['pending', 'success', 'canceled']),
+        'user_id' => \App\Models\User::factory(),
+        'basecamp_id' => \App\Models\Basecamp::factory(),
+        // Sesuaikan nama kolom di bawah ini dengan kebutuhan database Anda
+        'order_id' => 'BK-' . now()->format('Ymd') . '-' . strtoupper($this->faker->unique()->bothify('??##')),
+        'tanggal_naik' => $this->faker->dateTimeBetween('+1 day', '+1 month')->format('Y-m-d'),
+        'jumlah_pendaki' => $this->faker->numberBetween(1, 5),
+        'total_price' => $this->faker->numberBetween(50000, 150000),
+        'status' => $this->faker->randomElement(['pending', 'confirmed', 'canceled', 'completed']),
+        
+        // JIKA kolom checkout_by WAJIB diisi di database (bukan nullable), tambahkan ini:
+        'checkout_by' => 1,
         ];
     }
 }

@@ -146,7 +146,7 @@ class BasecampTest extends TestCase
 
         $response = $this->withHeaders([
             'Accept' => 'application/json',
-        ])->putJson("/api/admin-gunung/basecamps/{$basecamp->id}/assign-admin", [
+        ])->patchJson("/api/admin-gunung/basecamps/{$basecamp->id}/assign-admin", [
             'admin_basecamp_id' => $targetUser->id
         ]);
 

@@ -144,8 +144,18 @@ class GunungController extends Controller
             ->where('created_by', auth()->id())
             ->firstOrFail();
 
+        
+        $fotoPath = null;
+
+        if ($request->hasFile('foto')) {
+
+            $fotoPath = $request
+                ->file('foto')
+                ->store('gunung', 'public');
+        }
+
         $galeri = GunungGaleri::create([
-            'foto' => $request->foto,
+            'foto' => $fotoPath,
             'caption' => $request->caption,
             'gunung_id' => $id,
         ]);

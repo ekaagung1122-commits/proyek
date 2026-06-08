@@ -55,7 +55,8 @@ class AdminRequestTest extends TestCase
             'Accept' => 'application/json',
         ])->postJson('/api/admin-gunung/requests', [
             'user_id' => $targetUser->id,
-            'basecamp_id' => $basecamp->id
+            'basecamp_id' => $basecamp->id,
+            'email' => $targetUser->email
         ]);
 
         $response->assertStatus(200)

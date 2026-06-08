@@ -24,7 +24,7 @@ class AdminRequestTest extends TestCase
             'user_id' => $user->id
         ]);
 
-        $response = $this->getJson('/api/user/request');
+        $response = $this->getJson('/api/user/requests');
 
         $response->assertStatus(200)
                  ->assertJsonFragment([
@@ -43,7 +43,7 @@ class AdminRequestTest extends TestCase
         $file2 = UploadedFile::fake()->image('foto.png');
 
         // Menggunakan POST biasa dengan rincian berkas agar multipart form data ter-parsing sempurna
-        $response = $this->post('/api/user/request', [
+        $response = $this->post('/api/user/requests', [
             'request_type' => 'admin_gunung',
             'documents' => [
                 $file1,
@@ -70,7 +70,7 @@ class AdminRequestTest extends TestCase
         $user = User::factory()->create();
         Sanctum::actingAs($user);
 
-        $response = $this->postJson('/api/user/request', [
+        $response = $this->postJson('/api/user/requests', [
             'request_type' => 'admin_gunung'
         ]);
 
@@ -84,7 +84,7 @@ class AdminRequestTest extends TestCase
 
         $file = UploadedFile::fake()->create('virus.exe', 100, 'application/octet-stream');
 
-        $response = $this->post('/api/user/request', [
+        $response = $this->post('/api/user/requests', [
             'request_type' => 'admin_gunung',
             'documents' => [$file]
         ], ['Accept' => 'application/json']);
