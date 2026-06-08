@@ -11,6 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\BookingMember;
 
 class BookingController extends Controller
 {
@@ -105,6 +106,30 @@ class BookingController extends Controller
                     'total_price' => $total_price,
                     'status' => 'pending',
                 ]);
+
+                if ($request->has('anggota')) {
+
+                    foreach ($request->anggota as $index => $anggota) {
+
+                        $fotoPath = null;
+
+                        if ($request->hasFile("anggota.$index.foto_identitas")) {
+                            $fotoPath = $request
+                                ->file("anggota.$index.foto_identitas")
+                                ->store('identitas', 'public');
+                        }
+
+                        BookingMember::create([
+                            'booking_id' => $booking->id,
+                            'nama' => $anggota['nama'],
+                            'alamat' => $anggota['alamat'],
+                            'tanggal_lahir' => $anggota['tanggal_lahir'],
+                            'jenis_kelamin' => $anggota['jenis_kelamin'],
+                            'identitas' => $anggota['identitas'],
+                            'foto_identitas' => $fotoPath,
+                        ]);
+                    }
+                }
 
                 $orderId = 'BOOK-' . $booking->id . '-' . time();
 
