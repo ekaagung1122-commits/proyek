@@ -93,8 +93,6 @@ class BookingTest extends TestCase
             'jumlah_pendaki' => 2
         ]);
 
-        $response->dump();
-
         $this->assertTrue(in_array($response->getStatusCode(), [200, 201]));
 
         $this->assertDatabaseHas('bookings', [

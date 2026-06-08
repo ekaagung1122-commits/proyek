@@ -20,8 +20,8 @@ class BookingFactory extends Factory
     public function definition(): array
     {
         return [
-        'user_id' => \App\Models\User::factory(),
-        'basecamp_id' => \App\Models\Basecamp::factory(),
+        'user_id' => User::factory(),
+        'basecamp_id' => Basecamp::factory(),
         // Sesuaikan nama kolom di bawah ini dengan kebutuhan database Anda
         'order_id' => 'BK-' . now()->format('Ymd') . '-' . strtoupper($this->faker->unique()->bothify('??##')),
         'tanggal_naik' => $this->faker->dateTimeBetween('+1 day', '+1 month')->format('Y-m-d'),
@@ -30,7 +30,7 @@ class BookingFactory extends Factory
         'status' => $this->faker->randomElement(['pending', 'confirmed', 'canceled', 'completed']),
         
         // JIKA kolom checkout_by WAJIB diisi di database (bukan nullable), tambahkan ini:
-        'checkout_by' => \App\Models\User::factory(),
+        'checkout_by' => User::factory(),
         ];
     }
 }
