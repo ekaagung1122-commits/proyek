@@ -24,6 +24,7 @@ class GunungFactory extends Factory
             'deskripsi' => $this->faker->paragraph(),
             'created_by' => User::factory(),
             'ketinggian' => $this->faker->numberBetween(1000, 3676),
+            'created_by' => \App\Models\User::factory(),
         ];
     }
 }

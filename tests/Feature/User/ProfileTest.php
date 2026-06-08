@@ -85,7 +85,7 @@ class ProfileTest extends TestCase
         $file = UploadedFile::fake()->image('foto.jpg');
 
         // Menggunakan post multipart biasa dengan header JSON untuk upload file
-        $response = $this->post('/api/user/profile/foto', [
+        $response = $this->patch('/api/user/profile/foto', [
             'foto' => $file
         ], ['Accept' => 'application/json']);
 
@@ -113,7 +113,7 @@ class ProfileTest extends TestCase
             'application/pdf'
         );
 
-        $response = $this->post('/api/user/profile/foto', [
+        $response = $this->patch('/api/user/profile/foto', [
             'foto' => $file
         ], ['Accept' => 'application/json']);
 
@@ -128,7 +128,7 @@ class ProfileTest extends TestCase
 
         Sanctum::actingAs($user);
 
-        $response = $this->postJson('/api/user/profile/change-password', [
+        $response = $this->patchJson('/api/user/profile/change-password', [
             'current_password' => 'passwordlama',
             'new_password' => 'passwordbaru123',
             'new_password_confirmation' => 'passwordbaru123'

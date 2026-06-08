@@ -156,10 +156,10 @@ Route::prefix('user')
 
     // belum ditest postman
     Route::get('/bookings', [BookingController::class, 'index']);
+    Route::get('/bookings/history', [BookingController::class, 'history']);
     Route::get('/bookings/{id}', [BookingController::class, 'show']);
     Route::post('/bookings', [BookingController::class, 'store']);
     Route::patch('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
-    Route::get('/bookings/history', [BookingController::class, 'history']);
     Route::get('/bookings/{id}/reschedule', [BookingController::class, 'reschedule']);
     Route::get('/bookings/{id}/pdf', [BookingController::class, 'downloadPdf']);
 

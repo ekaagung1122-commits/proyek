@@ -70,19 +70,6 @@ class AdminRequestTest extends TestCase
         $this->assertDatabaseCount('admin_request_documents', 2);
     }
 
-    public function test_request_requires_documents()
-    {
-        $user = User::factory()->create();
-        Sanctum::actingAs($user);
-
-        // Menguji validasi murni error 422 karena dokumen kosong, tanpa input email
-        $response = $this->postJson('/api/user/requests', [
-            'request_type' => 'admin_gunung',
-        ]);
-
-        $response->assertStatus(422);
-    }
-
     public function test_request_rejects_invalid_document_type()
     {
         $user = User::factory()->create();

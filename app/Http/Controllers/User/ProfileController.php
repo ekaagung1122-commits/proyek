@@ -10,7 +10,7 @@ class ProfileController extends Controller
 {
     public function show()
     {
-        return response()->view('user.profile', [
+        return response()->json([
             'message' => 'Profile User',
             'data' => auth()->user(),
         ]);

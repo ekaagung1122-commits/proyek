@@ -64,12 +64,6 @@ class BookingController extends Controller
         $booking->checkin_by = auth()->id();
         $booking->save();
 
-        activityLog(
-            'checkin',
-            'booking',
-            'Admin Basecamp checkin booking ID ' . $booking->id
-        );
-
         return response()->json([
             'message' => 'Check-in berhasil',
             'data' => $booking
@@ -106,7 +100,7 @@ class BookingController extends Controller
         $booking->update([
             'checkout_at' => now(),
             'checkout_by' => auth()->id(),
-            'status' => 'confirmed'
+            'status' => 'completed'
         ]);
 
         return response()->json([

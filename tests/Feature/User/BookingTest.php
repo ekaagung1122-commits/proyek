@@ -31,6 +31,25 @@ class BookingTest extends TestCase
                  ]);
     }
 
+    public function test_user_can_view_hiking_history()
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        Booking::factory()->count(2)->create([
+            'user_id' => $user->id,
+            'status' => 'completed'
+        ]);
+
+        // Dipastikan memanggil endpoint riwayat pendakian yang selesai
+        $response = $this->getJson('/api/user/bookings/history');
+
+        $response->assertStatus(200)
+                 ->assertJsonFragment([
+                     'message' => 'Riwayat Pendakian'
+                 ]);
+    }
+
     public function test_user_can_view_booking_detail()
     {
         $user = User::factory()->create();
@@ -40,7 +59,6 @@ class BookingTest extends TestCase
             'user_id' => $user->id
         ]);
 
-        // Penyesuaian endpoint agar konsisten berada di bawah prefix rute user
         $response = $this->getJson("/api/user/bookings/{$booking->id}");
 
         $response->assertStatus(200)
@@ -95,7 +113,8 @@ class BookingTest extends TestCase
             'status' => 'pending'
         ]);
 
-        $response = $this->postJson("/api/user/bookings/{$booking->id}/cancel");
+        // Disinkronkan menggunakan patchJson sesuai standar routing API
+        $response = $this->patchJson("/api/user/bookings/{$booking->id}/cancel");
 
         $response->assertStatus(200)
                  ->assertJsonFragment([
@@ -104,26 +123,8 @@ class BookingTest extends TestCase
 
         $this->assertDatabaseHas('bookings', [
             'id' => $booking->id,
-            'status' => 'cancelled'
+            'status' => 'cancelled' // Pastikan di controller mengubah status menjadi cancelled
         ]);
-    }
-
-    public function test_user_can_view_hiking_history()
-    {
-        $user = User::factory()->create();
-        Sanctum::actingAs($user);
-
-        Booking::factory()->count(2)->create([
-            'user_id' => $user->id,
-            'status' => 'completed'
-        ]);
-
-        $response = $this->getJson('/api/user/bookings/history');
-
-        $response->assertStatus(200)
-                 ->assertJsonFragment([
-                     'message' => 'Riwayat Pendakian'
-                 ]);
     }
 
     public function test_user_can_reschedule_booking()
@@ -151,7 +152,8 @@ class BookingTest extends TestCase
             'status' => 'pending'
         ]);
 
-        $response = $this->postJson("/api/user/bookings/{$booking->id}/reschedule", [
+        // Disinkronkan menggunakan patchJson agar tidak memicu error 405 Method Not Allowed
+        $response = $this->patchJson("/api/user/bookings/{$booking->id}/reschedule", [
             'tanggal_naik' => $newDate
         ]);
 

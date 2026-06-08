@@ -4,10 +4,10 @@ namespace Tests\Feature\AdminBasecamp;
 
 use Tests\TestCase;
 use App\Models\User;
+use App\Models\Jalur;
 use App\Models\Role;
 use App\Models\Gunung;
-use App\Models\Basecamp;
-use App\Models\Jalur;   
+use App\Models\Basecamp;  
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Illuminate\Http\UploadedFile;
