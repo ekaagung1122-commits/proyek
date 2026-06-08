@@ -49,7 +49,7 @@ class AdminRequestController extends Controller
             ], 400);
         }
 
-        $targetUser = User::findOrFail($req->user_id);
+        $targetUser = User::find($req->user_id);
 
         $role = Role::where('name', $req->request_type)->firstOrFail();
 
@@ -100,7 +100,7 @@ class AdminRequestController extends Controller
             'reason' => 'required|string|max:255',
         ]);
 
-        $targetUser = User::findOrFail($req->user_id);
+        $targetUser = User::find($req->user_id);
         
         $req->update([
             'status' => 'rejected', 
