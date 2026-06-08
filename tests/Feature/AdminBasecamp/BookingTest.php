@@ -116,7 +116,7 @@ class BookingTest extends TestCase
 
         $response = $this->withHeaders([
             'Accept' => 'application/json',
-        ])->postJson("/api/admin-basecamp/bookings/{$booking->id}/checkin");
+        ])->patchJson("/api/admin-basecamp/bookings/{$booking->id}/checkin");
 
         $response->assertStatus(200);
         $this->assertNotNull($booking->fresh()->checkin_at);
@@ -147,7 +147,7 @@ class BookingTest extends TestCase
 
         $response = $this->withHeaders([
             'Accept' => 'application/json',
-        ])->postJson("/api/admin-basecamp/bookings/{$booking->id}/checkout");
+        ])->patchJson("/api/admin-basecamp/bookings/{$booking->id}/checkout");
 
         $response->assertStatus(200);
 

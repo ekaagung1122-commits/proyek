@@ -22,19 +22,17 @@ class AdminRequestTest extends TestCase
 
         $basecamp = Basecamp::factory()->create();
 
-        // Pastikan menyertakan field email agar tidak terkena constraint NOT NULL
+        // Di sini email diset null karena ini adalah request dari user biasa (admin_gunung)
         AdminRequest::factory()->count(3)->create([
             'request_by' => $user->id,
             'user_id' => $user->id,
-            'email' => $user->email, // <--- Menghindari NOT NULL constraint
+            'email' => null, // <--- User biasa tidak memiliki data email request
             'basecamp_id' => $basecamp->id,
             'request_type' => 'admin_gunung'
         ]);
 
-        // Jika Anda menerima 405, pastikan method di route-nya adalah GET. 
         $response = $this->getJson('/api/user/requests');
 
-        // Jika route Anda sebenarnya menggunakan POST atau penamaan lain, sesuaikan method di atas.
         $response->assertStatus(200);
     }
 
@@ -48,10 +46,9 @@ class AdminRequestTest extends TestCase
         $file1 = UploadedFile::fake()->create('ktp.pdf', 100, 'application/pdf');
         $file2 = UploadedFile::fake()->image('foto.png');
 
-        // Sertakan data 'email' ke dalam payload request jika Controller membutuhkannya dari request input
+        // Sesuai logic: payload dari user murni TANPA email
         $response = $this->post('/api/user/requests', [
             'request_type' => 'admin_gunung',
-            'email' => $user->email, // <--- Menyediakan input email untuk Controller
             'documents' => [
                 $file1,
                 $file2
@@ -66,7 +63,8 @@ class AdminRequestTest extends TestCase
         $this->assertDatabaseHas('admin_requests', [
             'request_by' => $user->id,
             'request_type' => 'admin_gunung',
-            'status' => 'pending'
+            'status' => 'pending',
+            'email' => null // Memastikan di DB tersimpan null untuk user biasa
         ]);
 
         $this->assertDatabaseCount('admin_request_documents', 2);
@@ -77,10 +75,9 @@ class AdminRequestTest extends TestCase
         $user = User::factory()->create();
         Sanctum::actingAs($user);
 
-        // Kirimkan email juga di sini agar kegagalan murni karena 'documents' kosong (Validation 422), bukan eror database 500
+        // Menguji validasi murni error 422 karena dokumen kosong, tanpa input email
         $response = $this->postJson('/api/user/requests', [
             'request_type' => 'admin_gunung',
-            'email' => $user->email
         ]);
 
         $response->assertStatus(422);
@@ -95,7 +92,6 @@ class AdminRequestTest extends TestCase
 
         $response = $this->post('/api/user/requests', [
             'request_type' => 'admin_gunung',
-            'email' => $user->email,
             'documents' => [$file]
         ], ['Accept' => 'application/json']);
 

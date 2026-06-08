@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('admin_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->string('email')->constrained()->cascadeOnDelete();
+            $table->string('email')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('request_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('request_type');
             $table->foreignId('basecamp_id')->nullable()->constrained()->onDelete('cascade');
