@@ -14,6 +14,7 @@ class GunungTest extends TestCase
 
     public function test_user_can_view_gunung_list()
     {
+        // Menggunakan factory, kolom created_by otomatis terisi aman
         Gunung::factory()->count(3)->create(['status' => 1]);
 
         $response = $this->getJson('/api/user/gunungs');
@@ -26,14 +27,15 @@ class GunungTest extends TestCase
 
     public function test_user_can_search_gunung_by_name()
     {
-        Gunung::create([
+        // Diubah menggunakan factory agar tidak melanggar aturan NOT NULL created_by
+        Gunung::factory()->create([
             'nama' => 'Gunung Semeru',
             'lokasi' => 'Jawa Timur',
             'ketinggian' => 3676,
             'status' => 1
         ]);
 
-        Gunung::create([
+        Gunung::factory()->create([
             'nama' => 'Gunung Merbabu',
             'lokasi' => 'Jawa Tengah',
             'ketinggian' => 3145,
@@ -49,7 +51,8 @@ class GunungTest extends TestCase
 
     public function test_user_can_view_gunung_detail()
     {
-        $gunung = Gunung::create([
+        // Diubah menggunakan factory agar aman dari constraint database
+        $gunung = Gunung::factory()->create([
             'nama' => 'Gunung Semeru',
             'lokasi' => 'Jawa Timur',
             'ketinggian' => 3676,

@@ -160,7 +160,7 @@ Route::prefix('user')
     Route::get('/bookings/{id}', [BookingController::class, 'show']);
     Route::post('/bookings', [BookingController::class, 'store']);
     Route::patch('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
-    Route::get('/bookings/{id}/reschedule', [BookingController::class, 'reschedule']);
+    Route::patch('/bookings/{id}/reschedule', [BookingController::class, 'reschedule']);
     Route::get('/bookings/{id}/pdf', [BookingController::class, 'downloadPdf']);
 
     Route::get('/profile', [ProfileController::class, 'show']);

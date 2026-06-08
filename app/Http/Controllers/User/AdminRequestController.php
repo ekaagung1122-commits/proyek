@@ -24,7 +24,7 @@ class AdminRequestController extends Controller
     {
         $request->validate([
             'request_type' => 'required|in:admin_gunung',
-            'documents.*' => 'required|file|mimes:pdf,jpg,png|max:4096|array|min:1',
+            'documents.*' => 'required|file|mimes:pdf,jpg,png|max:4096',
         ]);
 
         $exists = AdminRequest::where('user_id', auth()->id())
