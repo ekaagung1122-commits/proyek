@@ -137,7 +137,7 @@ class GunungController extends Controller
     public function tambahGaleri(Request $request, $id)
     {
         $request->validate([
-            'foto' => 'required|string',
+            'foto' => 'required|image|mimes:jpeg,jpg,png|max:4096',
         ]);
 
         $gunung = Gunung::where('id', $id)

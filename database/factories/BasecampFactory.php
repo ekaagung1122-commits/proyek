@@ -24,6 +24,7 @@ class BasecampFactory extends Factory
             'nama' => 'Basecamp ' . $this->faker->word(),
             'admin_basecamp_id' => User::factory(),
             'gunung_id' => Gunung::factory(),
+            'lokasi' => $this->faker->address(),
         ];
     }
 }
