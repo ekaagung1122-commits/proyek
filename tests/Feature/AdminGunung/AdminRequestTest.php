@@ -67,7 +67,6 @@ class AdminRequestTest extends TestCase
                      'message' => 'Request admin basecamp berhasil dibuat'
                  ]);
 
-        // Dipastikan memeriksa berdasarkan kolom email & basecamp_id sesuai logika baru Controller kamu
         $this->assertDatabaseHas('admin_requests', [
             'email' => $targetUser->email,
             'basecamp_id' => $basecamp->id,
