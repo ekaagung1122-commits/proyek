@@ -53,7 +53,8 @@ class AdminRequestController extends Controller
 
         $role = Role::where('name', $req->request_type)->firstOrFail();
 
-        $targetUser->roles()->syncWithoutDetaching($role->id);
+        if ($targetUser) {
+            $targetUser->roles()->syncWithoutDetaching($role->id);
 
             if ($req->basecamp_id) {
                 $basecamp = Basecamp::find($req->basecamp_id);
@@ -64,6 +65,7 @@ class AdminRequestController extends Controller
                     ]);
                 }
             }
+        }
 
         $req->update([
             'status' => 'approved',
