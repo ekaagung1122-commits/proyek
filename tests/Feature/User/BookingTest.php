@@ -69,11 +69,23 @@ class BookingTest extends TestCase
 
     public function test_user_can_create_booking()
     {
+        // 1. Palsukan respon Midtrans agar tidak crash/error 500 karena koneksi internet
+        \Illuminate\Support\Facades\Http::fake([
+            'https://app.sandbox.midtrans.com/*' => \Illuminate\Support\Facades\Http::response([
+                'token' => 'mock-snap-token-12345'
+            ], 200)
+        ]);
+
         $user = User::factory()->create();
         Sanctum::actingAs($user);
 
+        // 2. Buat admin dummy untuk disisipkan ke basecamp
+        $admin = User::factory()->create();
+
+        // 3. Buat basecamp dan pastikan 'admin_basecamp_id' terisi (agar controller bisa mengambil nilainya)
         $basecamp = Basecamp::factory()->create([
-            'harga_tiket' => 15000
+            'harga_tiket' => 15000,
+            'admin_basecamp_id' => $admin->id // <-- Menyuplai id admin ke objek basecamp yang dibaca controller
         ]);
 
         $tanggalNaik = now()->addDay()->toDateString();
