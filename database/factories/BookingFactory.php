@@ -30,7 +30,7 @@ class BookingFactory extends Factory
         'status' => $this->faker->randomElement(['pending', 'confirmed', 'canceled', 'completed']),
         
         // JIKA kolom checkout_by WAJIB diisi di database (bukan nullable), tambahkan ini:
-        'checkout_by' => 1,
+        'checkout_by' => \App\Models\User::factory(),
         ];
     }
 }
