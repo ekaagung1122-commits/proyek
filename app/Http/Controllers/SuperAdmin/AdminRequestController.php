@@ -51,7 +51,22 @@ class AdminRequestController extends Controller
 
         $targetUser = User::find($req->user_id);
 
-        $role = Role::where('name', $req->request_type)->firstOrFail();
+        $role = Role::where('name', 'admin_gunung')->first();
+
+        if ($targetUser && $role) {
+            
+            $targetUser->roles()->syncWithoutDetaching($role->id);
+
+            if ($req->basecamp_id) {
+                $basecamp = Basecamp::find($req->basecamp_id);
+                if ($basecamp) {
+                    $basecamp->update([
+                        'admin_basecamp_id' => $targetUser->id
+                    ]);
+                }
+            }
+            
+        }
 
         if ($targetUser) {
             $targetUser->roles()->syncWithoutDetaching($role->id);
