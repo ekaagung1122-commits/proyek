@@ -49,15 +49,24 @@ class AdminRequestController extends Controller
             ], 400);
         }
 
-        // Jika ada basecamp_id, berarti dia daftar jadi Admin Basecamp. Jika tidak, maka Admin Gunung.
-        // 1. Ambil data User dan Tentukan Role secara dinamis
-        $targetUser = User::find($req->user_id);
+        $targetUser = null;
+
+        if (!empty($req->user_id)) {
+            // Jalur Normal: Cari pakai ID jika ada
+            $targetUser = User::find($req->user_id);
+        } elseif (!empty($req->email)) {
+            // 🌟 JALUR DARURAT DEMO: Jika ID null, cari akun di tabel users yang email-nya cocok!
+            $targetUser = User::where('email', $req->email)->first();
+        }
+
+        // 2. Tentukan nama role secara dinamis
         $roleName = !empty($req->basecamp_id) ? 'admin_basecamp' : 'admin_gunung';
         $role = Role::where('name', $roleName)->first();
 
-        // 2. Cek Validasi Data
+        // 3. Cek Validasi Data
         if ($targetUser && $role) {
             
+            // Tempelkan role ke user yang berhasil ditemukan lewat email tadi
             $targetUser->roles()->syncWithoutDetaching($role->id);
 
             if ($req->basecamp_id) {
@@ -70,25 +79,25 @@ class AdminRequestController extends Controller
             }
             
         } else {
-            // 🌟 KUNCI DETEKSI: Paksa Laravel mengembalikan error detail ke Frontend React kamu
+            // Jika masih gagal, lempar error detail ke React untuk dibaca
             return response()->json([
                 'message' => 'Gagal menambah role karena data di VPS tidak lengkap!',
                 'detail_error' => [
-                    'apakah_user_ada_di_vps' => $targetUser ? 'ADA (ID: '.$targetUser->id.')' : 'TIDAK ADA/NULL',
+                    'apakah_user_ada_di_vps' => $targetUser ? 'ADA (ID: '.$targetUser->id.')' : 'TIDAK ADA/NULL (Email pengaju belum terdaftar sebagai akun di web)',
                     'nama_role_yang_dicari' => $roleName,
                     'apakah_role_ada_di_vps_db' => $role ? 'ADA (ID: '.$role->id.')' : 'TIDAK ADA/NULL',
-                    'user_id_dari_tabel_request' => $req->user_id,
+                    'email_dari_tabel_request' => $req->email,
                 ]
-            ], 422); // Kita kirim status 422 agar dibaca sebagai error validasi di React
+            ], 422);
         }
 
-        // 3. Proses update status (Hanya jalan kalau lolos pengecekan di atas)
+        // 4. Update status pengajuan
         $req->update([
             'status' => 'approved',
             'reason' => 'Pengajuan telah disetujui',
         ]);
 
-        // 4. Kirim Email Notifikasi
+        // 5. Kirim Email Notifikasi
         if (!empty($req->email)) {
             Mail::to($req->email)->send(new RequestStatusMail($req, $targetUser));
         }
