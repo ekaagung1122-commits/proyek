@@ -49,14 +49,20 @@ class AdminRequestController extends Controller
             ], 400);
         }
 
+        // 1. Ambil data User
         $targetUser = User::find($req->user_id);
 
-        $role = Role::where('name', 'admin_gunung')->first();
+        // Jika ada basecamp_id, berarti dia daftar jadi Admin Basecamp. Jika tidak, maka Admin Gunung.
+        $roleName = $req->basecamp_id ? 'admin_basecamp' : 'admin_gunung';
+        $role = Role::where('name', $roleName)->first();
 
+        // 3. Pengecekan keamanan objek
         if ($targetUser && $role) {
             
+            // Berikan role secara dinamis (bisa admin_basecamp atau admin_gunung)
             $targetUser->roles()->syncWithoutDetaching($role->id);
 
+            // Hubungkan user ke basecamp jika dia mendaftar sebagai Admin Basecamp
             if ($req->basecamp_id) {
                 $basecamp = Basecamp::find($req->basecamp_id);
                 if ($basecamp) {
@@ -66,39 +72,19 @@ class AdminRequestController extends Controller
                 }
             }
             
+        } else {
+            \Log::warning("Sinkronisasi role dilewati. User ada: " . ($targetUser ? 'Ya' : 'Tidak') . " | Role '{$roleName}' ada di DB: " . ($role ? 'Ya' : 'Tidak'));
         }
 
-        if ($targetUser) {
-            $targetUser->roles()->syncWithoutDetaching($role->id);
-
-            if ($req->basecamp_id) {
-                $basecamp = Basecamp::find($req->basecamp_id);
-
-                if ($basecamp) {
-                    $basecamp->update([
-                        'admin_basecamp_id' => $targetUser->id
-                    ]);
-                }
-            }
-        }
-
+        // 4. Update status pengajuan
         $req->update([
             'status' => 'approved',
             'reason' => 'Pengajuan telah disetujui',
         ]);
 
         if (!empty($req->email)) {
-
             Mail::to($req->email)->send(new RequestStatusMail($req, $targetUser));
-
-        } else {
-            \Log::warning("Kolom email pada request ID " . $req->id . " ternyata kosong.");
         }
-
-        $req->update([
-            'status' => 'approved',
-            'reason' => 'Pengajuan telah disetujui',
-        ]);
 
         logActivity(
             'approve',
