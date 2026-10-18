@@ -49,28 +49,58 @@ class AdminRequestController extends Controller
             ], 400);
         }
 
-        $targetUser = User::findOrFail($req->user_id);
+        $targetUser = null;
 
-        $role = Role::where('name', $req->request_type)->firstOrFail();
+        if (!empty($req->user_id)) {
+            // Jalur Normal: Cari pakai ID jika ada
+            $targetUser = User::find($req->user_id);
+        } elseif (!empty($req->email)) {
+            // 🌟 JALUR DARURAT DEMO: Jika ID null, cari akun di tabel users yang email-nya cocok!
+            $targetUser = User::where('email', $req->email)->first();
+        }
 
-        $targetUser->roles()->syncWithoutDetaching($role->id);
+        // 2. Tentukan nama role secara dinamis
+        $roleName = !empty($req->basecamp_id) ? 'admin_basecamp' : 'admin_gunung';
+        $role = Role::where('name', $roleName)->first();
+
+        // 3. Cek Validasi Data
+        if ($targetUser && $role) {
+            
+            // Tempelkan role ke user yang berhasil ditemukan lewat email tadi
+            $targetUser->roles()->syncWithoutDetaching($role->id);
 
             if ($req->basecamp_id) {
                 $basecamp = Basecamp::find($req->basecamp_id);
-
                 if ($basecamp) {
                     $basecamp->update([
                         'admin_basecamp_id' => $targetUser->id
                     ]);
                 }
             }
+            
+        } else {
+            // Jika masih gagal, lempar error detail ke React untuk dibaca
+            return response()->json([
+                'message' => 'Gagal menambah role karena data di VPS tidak lengkap!',
+                'detail_error' => [
+                    'apakah_user_ada_di_vps' => $targetUser ? 'ADA (ID: '.$targetUser->id.')' : 'TIDAK ADA/NULL (Email pengaju belum terdaftar sebagai akun di web)',
+                    'nama_role_yang_dicari' => $roleName,
+                    'apakah_role_ada_di_vps_db' => $role ? 'ADA (ID: '.$role->id.')' : 'TIDAK ADA/NULL',
+                    'email_dari_tabel_request' => $req->email,
+                ]
+            ], 422);
+        }
 
+        // 4. Update status pengajuan
         $req->update([
             'status' => 'approved',
             'reason' => 'Pengajuan telah disetujui',
         ]);
 
-        Mail::to($targetUser->email)->send(new RequestStatusMail($req, $targetUser));
+        // 5. Kirim Email Notifikasi
+        if (!empty($req->email)) {
+            Mail::to($req->email)->send(new RequestStatusMail($req, $targetUser));
+        }
 
         logActivity(
             'approve',
@@ -100,7 +130,7 @@ class AdminRequestController extends Controller
             'reason' => 'required|string|max:255',
         ]);
 
-        $targetUser = User::findOrFail($req->user_id);
+        $targetUser = User::find($req->user_id);
         
         $req->update([
             'status' => 'rejected', 

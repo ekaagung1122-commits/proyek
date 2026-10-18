@@ -1,7 +1,5 @@
 <h2>Pengajuan Admin Diproses</h2>
 
-<p>Hallo {{ $user->name }},</p>
-
 <p>
 Status pengajuan admin kamu telah diproses dengan hasil:
 <b>{{ strtoupper($req->status) }}</b>

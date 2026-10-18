@@ -36,7 +36,8 @@ WORKDIR /var/www/html
 COPY . .
 
 # Install dependencies Laravel
-RUN composer install --optimize-autoloader --no-dev
+ENV COMPOSER_HTTP_TIMEOUT=2000
+RUN composer install --no-interaction --no-plugins --no-scripts --prefer-dist --optimize-autoloader --no-dev
 
 # Set permission
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
