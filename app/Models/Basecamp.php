@@ -61,4 +61,9 @@ class Basecamp extends Model
             'admin_basecamp_id'
         );
     }
+
+    public function peralatans()
+    {
+        return $this->hasMany(Peralatan::class, 'basecamp_id');
+    }
 }
