@@ -32,6 +32,8 @@ use App\Http\Controllers\NotificationController;
 
 use App\Http\Controllers\PaymentCallbackController;
 
+use App\Http\Controllers\Api\PeralatanController;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -209,3 +211,6 @@ Route::prefix('user')
 
         Route::get('/gunungs/{gunungId}/reviews', [ReviewController::class, 'gunungReviews']);
     });
+
+// peralatan
+Route::get('/basecamps/{basecampId}/peralatan', [PeralatanController::class, 'getByBasecamp']);
