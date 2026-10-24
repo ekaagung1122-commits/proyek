@@ -5,13 +5,15 @@ namespace App\Http\Controllers\User;
 use App\Models\Booking;
 use App\Models\Basecamp;
 use App\Models\BasecampKuota;
+use App\Models\BookingMember;
+use App\Models\Peralatan; 
+use App\Models\Promo;     
 
 use Barryvdh\DomPDF\Facade\Pdf;
-
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\BookingMember;
+use Illuminate\Support\Facades\Http;
 
 class BookingController extends Controller
 {
@@ -36,7 +38,7 @@ class BookingController extends Controller
 
     public function show($id)
     {
-        $booking = Booking::with('basecamp')
+        $booking = Booking::with(['basecamp', 'detailSewa.peralatan', 'promo']) // Menambahkan relasi sewa & promo
             ->where('user_id', auth()->id())
             ->where('id', $id)
             ->firstOrFail();
@@ -53,66 +55,134 @@ class BookingController extends Controller
             'basecamp_id' => 'required|exists:basecamps,id',
             'tanggal_naik' => 'required|date',
             'jumlah_pendaki' => 'required|integer|min:1',
+            'equipments' => 'nullable|array',
+            'kode_promo' => 'nullable|string'
         ]);
 
         try {
             return DB::transaction(function () use ($request) {
                 $basecamp = Basecamp::findOrFail($request->basecamp_id);
 
+                // Cek Duplicate Booking
                 $duplicateBooking = Booking::where('user_id', auth()->id())
                     ->where('tanggal_naik', $request->tanggal_naik)
                     ->whereIn('status', ['pending', 'confirmed'])
                     ->exists();
 
                 if ($duplicateBooking) {
-                    return response()->json(['message' => 'Anda sudah punya booking aktif'], 400);
+                    throw new \Exception('Anda sudah punya booking aktif untuk tanggal ini.');
                 }
 
                 if ($request->tanggal_naik < now()->toDateString()) {
-                    return response()->json(['message' => 'Tanggal tidak valid atau sudah lewat'], 400);
+                    throw new \Exception('Tanggal tidak valid atau sudah lewat.');
                 }
 
+                // Cek Kuota Pendakian
                 $kuota = BasecampKuota::where('basecamp_id', $basecamp->id)
                     ->where('tanggal', $request->tanggal_naik)
                     ->lockForUpdate()
                     ->first();
 
                 if (!$kuota) {
-                    return response()->json(['message' => 'Kuota belum diatur oleh admin'], 400);
+                    throw new \Exception('Kuota belum diatur oleh admin.');
                 }
 
                 $sisaKuota = $kuota->kuota - $kuota->kuota_terpakai;
                 if ($request->jumlah_pendaki > $sisaKuota) {
-                    return response()->json(['message' => 'Kuota untuk tanggal ini tidak mencukupi'], 400);
+                    throw new \Exception('Kuota untuk tanggal ini tidak mencukupi.');
                 }
 
+                // Potong kuota pendaki
                 $kuota->kuota_terpakai += $request->jumlah_pendaki;
                 $kuota->save();
 
-                $harga = $basecamp->harga_tiket;
-                $total_price = $harga * $request->jumlah_pendaki;
-
-                if (!$total_price || $total_price <= 0) {
-                    $total_price = $request->input('total_price', 50000);
+                // Kalkulasi Harga Tiket
+                $hargaTiketSatuan = $basecamp->harga_tiket;
+                $totalHargaTiket = $hargaTiketSatuan * $request->jumlah_pendaki;
+                if (!$totalHargaTiket || $totalHargaTiket <= 0) {
+                    $totalHargaTiket = $request->input('total_price', 50000);
                 }
 
-                // 1. Buat data booking awal di database lokal
+                // Kalkulasi Sewa Peralatan
+                $totalSewaAlat = 0;
+                $detailSewaItems = [];
+
+                if ($request->has('equipments') && is_array($request->equipments)) {
+                    foreach ($request->equipments as $eq) {
+                        $alat = Peralatan::lockForUpdate()->findOrFail($eq['id']);
+                        
+                        if ($alat->stok < $eq['jumlah']) {
+                            throw new \Exception("Stok {$alat->nama_alat} tidak mencukupi. Sisa: {$alat->stok}");
+                        }
+
+                        $subtotalAlat = $alat->harga_sewa * $eq['jumlah'];
+                        $totalSewaAlat += $subtotalAlat;
+
+                        $detailSewaItems[] = [
+                            'peralatan_id' => $alat->id,
+                            'jumlah' => $eq['jumlah'],
+                            'harga_satuan' => $alat->harga_sewa,
+                            'subtotal' => $subtotalAlat,
+                        ];
+                        
+                        // Kurangi stok alat
+                        $alat->decrement('stok', $eq['jumlah']);
+                    }
+                }
+
+                // Kalkulasi Promo
+                $potonganPromo = 0;
+                $promoId = null;
+
+                if ($request->filled('kode_promo')) {
+                    $promo = Promo::where('kode_promo', $request->kode_promo)
+                                  ->where('status_aktif', true)
+                                  ->whereDate('berlaku_sampai', '>=', now())
+                                  ->where('kuota', '>', 0)
+                                  ->lockForUpdate()
+                                  ->first();
+
+                    if (!$promo) {
+                        throw new \Exception('Kode promo tidak valid, kadaluarsa, atau kuota habis.');
+                    }
+
+                    $promoId = $promo->id;
+                    if ($promo->jenis_potongan == 'persen') {
+                        $potonganPromo = ($totalHargaTiket + $totalSewaAlat) * ($promo->nilai_potongan / 100);
+                    } else {
+                        $potonganPromo = $promo->nilai_potongan;
+                    }
+                    
+                    // Kurangi kuota promo
+                    $promo->decrement('kuota', 1);
+                }
+
+                // Kalkulasi Grand Total
+                $grandTotal = ($totalHargaTiket + $totalSewaAlat) - $potonganPromo;
+                $grandTotal = max(0, $grandTotal); // Pastikan tidak minus
+
+                // Buat data booking awal di database lokal
                 $booking = Booking::create([
                     'user_id' => auth()->id(),
                     'basecamp_id' => $request->basecamp_id,
                     'tanggal_naik' => $request->tanggal_naik,
                     'jumlah_pendaki' => $request->jumlah_pendaki,
-                    'harga_per_orang' => $harga > 0 ? $harga : ($total_price / $request->jumlah_pendaki),
-                    'total_price' => $total_price,
+                    'harga_per_orang' => $hargaTiketSatuan > 0 ? $hargaTiketSatuan : ($totalHargaTiket / $request->jumlah_pendaki),
+                    'total_sewa_alat' => $totalSewaAlat, // Data baru
+                    'promo_id' => $promoId,              // Data baru
+                    'total_price' => $grandTotal,        // Grand Total baru
                     'status' => 'pending',
                 ]);
 
+                // Simpan Detail Sewa (Pivot Table)
+                if (!empty($detailSewaItems)) {
+                    $booking->detailSewa()->createMany($detailSewaItems);
+                }
+
+                // Simpan Data Anggota
                 if ($request->has('anggota')) {
-
                     foreach ($request->anggota as $index => $anggota) {
-
                         $fotoPath = null;
-
                         if ($request->hasFile("anggota.$index.foto_identitas")) {
                             $fotoPath = $request
                                 ->file("anggota.$index.foto_identitas")
@@ -131,8 +201,8 @@ class BookingController extends Controller
                     }
                 }
 
+                // Setup Midtrans API
                 $orderId = 'BOOK-' . $booking->id . '-' . time();
-
                 $user = auth()->user();
                 $userName = $user && $user->name ? $user->name : 'Pendaki';
                 $userEmail = $user && $user->email ? $user->email : 'pendaki@summitgo.com';
@@ -140,8 +210,7 @@ class BookingController extends Controller
                 $serverKey = env('MIDTRANS_SERVER_KEY');
                 $midtransUrl = 'https://app.sandbox.midtrans.com/snap/v1/transactions';
 
-                // 2. Tembak API Midtrans dengan penambahan parameter callbacks (Langkah 2)
-                $response = \Illuminate\Support\Facades\Http::withoutVerifying()
+                $response = Http::withoutVerifying()
                     ->withBasicAuth($serverKey, '')
                     ->withHeaders([
                         'Content-Type' => 'application/json',
@@ -150,7 +219,7 @@ class BookingController extends Controller
                     ->post($midtransUrl, [
                         'transaction_details' => [
                             'order_id' => $orderId,
-                            'gross_amount' => (int) $total_price,
+                            'gross_amount' => (int) $grandTotal, // Menggunakan Grand Total yang sudah dikalkulasi
                         ],
                         'customer_details' => [
                             'first_name' => strval($userName),
@@ -166,7 +235,7 @@ class BookingController extends Controller
                 $snapToken = $midtransData['token'] ?? null;
 
                 if (!$snapToken) {
-                    throw new \Exception("Gagal mendapatkan Snap Token dari Midtrans response.");
+                    throw new \Exception("Gagal mendapatkan Snap Token dari Midtrans.");
                 }
 
                 $booking->update([
@@ -184,9 +253,8 @@ class BookingController extends Controller
             \Log::error('Gagal Booking: ' . $e->getMessage());
 
             return response()->json([
-                'message' => 'Server Gagal Memproses Transaksi Booking.',
-                'error_detail' => $e->getMessage()
-            ], 500);
+                'message' => $e->getMessage()
+            ], 400);
         }
     }
 
