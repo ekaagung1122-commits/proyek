@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\BookingMember;
+use App\Models\DetailSewa;
 
 class Booking extends Model
 {
@@ -20,6 +21,8 @@ class Booking extends Model
         'status',
         'order_id',
         'snap_token',
+        'total_sewa_alat',
+        'promo_id',
         'checkin_at',
         'checkin_by',
         'checkout_at',
@@ -51,8 +54,8 @@ class Booking extends Model
         return $this->belongsTo(Promo::class, 'promo_id');
     }
 
-    public function detailSewas()
+    public function detailSewa()
     {
-        return $this->hasMany(DetailSewa::class, 'booking_id');
+        return $this->hasMany(DetailSewa::class, 'booking_id', 'id');
     }
 }

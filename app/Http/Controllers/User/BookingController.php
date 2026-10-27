@@ -51,6 +51,9 @@ class BookingController extends Controller
 
     public function store(Request $request)
     {
+
+        \Log::info('Data dari Flutter:', $request->all());
+
         $request->validate([
             'basecamp_id' => 'required|exists:basecamps,id',
             'tanggal_naik' => 'required|date',
@@ -172,6 +175,7 @@ class BookingController extends Controller
                     'promo_id' => $promoId,              // Data baru
                     'total_price' => $grandTotal,        // Grand Total baru
                     'status' => 'pending',
+                    'checkout_by' => auth()->id(),
                 ]);
 
                 // Simpan Detail Sewa (Pivot Table)
