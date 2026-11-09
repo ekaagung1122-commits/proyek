@@ -8,6 +8,7 @@ use App\Http\Controllers\SuperAdmin\AdminRequestController;
 use App\Http\Controllers\SuperAdmin\GunungController as SuperAdminGunungController;
 use App\Http\Controllers\SuperAdmin\DashboardController;
 use App\Http\Controllers\SuperAdmin\ActivityLogController;
+use App\Http\Controllers\SuperAdmin\PromoController;
 
 use App\Http\Controllers\AdminGunung\GunungController as AdminGunungGunungController;
 use App\Http\Controllers\AdminGunung\AdminRequestController as AdminGunungAdminRequestController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\AdminBasecamp\KuotaController;
 use App\Http\Controllers\AdminBasecamp\DashboardController as AdminBasecampDashboardController;
 use App\Http\Controllers\AdminBasecamp\JalurController;
 use App\Http\Controllers\AdminBasecamp\ReportController as AdminBasecampReportController;
+use App\Http\Controllers\AdminBasecamp\PeralatanController as AdminBasecampPeralatanController;
 
 use App\Http\Controllers\User\GunungController as UserGunungController;
 use App\Http\Controllers\User\BookingController;
@@ -75,6 +77,12 @@ Route::prefix('admin-basecamp')
         Route::post('/basecamps/{basecampId}/jalurs', [JalurController::class, 'store']);
         Route::put('/basecamps/{basecampId}/jalurs/{id}', [JalurController::class, 'update']);
         Route::delete('/basecamps/{basecampId}/jalurs/{id}', [JalurController::class, 'destroy']);
+
+        Route::get('/basecamps/{basecampId}/peralatans', [AdminBasecampPeralatanController::class, 'index']);
+        Route::get('/basecamps/{basecampId}/peralatans/{id}', [AdminBasecampPeralatanController::class, 'show']);
+        Route::post('/basecamps/{basecampId}/peralatans', [AdminBasecampPeralatanController::class, 'store']);
+        Route::put('/basecamps/{basecampId}/peralatans/{id}', [AdminBasecampPeralatanController::class, 'update']);
+        Route::delete('/basecamps/{basecampId}/peralatans/{id}', [AdminBasecampPeralatanController::class, 'destroy']);
 
         Route::get('/dashboard', [AdminBasecampDashboardController::class, 'index']);
         Route::get('/dashboard/charts', [AdminBasecampDashboardController::class, 'chart']);
@@ -133,6 +141,12 @@ Route::prefix('super-admin')
         Route::get('/users', [UserController::class, 'index']);
         Route::delete('/users/{id}', [UserController::class, 'destroy']);
         Route::delete('/users/{id}/roles/{role}', [UserController::class, 'removeRole']);
+
+        Route::get('/promos', [PromoController::class, 'index']);
+        Route::post('/promos', [PromoController::class, 'store']);
+        Route::get('/promos/{id}', [PromoController::class, 'show']);
+        Route::put('/promos/{id}', [PromoController::class, 'update']);
+        Route::delete('/promos/{id}', [PromoController::class, 'destroy']);
 
         Route::get('/gunungs', [SuperAdminGunungController::class, 'index']);
 
