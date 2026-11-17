@@ -15,7 +15,7 @@ class ReportController extends Controller
     {
         $basecampIds = Basecamp::where('admin_basecamp_id', auth()->id())->pluck('id');
 
-        $query = Booking::with(['basecamp', 'user', 'jalur'])
+        $query = Booking::with(['basecamp', 'user'])
         ->whereIn('basecamp_id', $basecampIds);
 
         if ($request->filled('from')) {

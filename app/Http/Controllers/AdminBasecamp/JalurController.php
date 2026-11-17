@@ -61,7 +61,6 @@ class JalurController extends Controller
             'status' => 'required|in:buka,tutup',
             'deskripsi' => 'nullable|string',
             'foto_utama' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
-            'harga' => 'required|integer|min:0|max:9999999999'
         ]);
 
         if ($request->hasFile('foto_utama')) {
@@ -89,7 +88,6 @@ class JalurController extends Controller
             'status' => 'required|in:buka,tutup',
             'deskripsi' => 'nullable|string',
             'foto_utama' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
-            'harga' => 'required|integer|min:0|max:9999999999'
         ]);
 
         $data = $request->except('foto_utama');

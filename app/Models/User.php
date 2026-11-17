@@ -74,4 +74,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Review::class);
     }
+
+    // =========================
+    // RELASI TRACKING GPS
+    // =========================
+    public function trackingSessions()
+    {
+        return $this->hasMany(TrackingSession::class);
+    }
 }

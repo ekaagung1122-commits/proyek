@@ -58,21 +58,30 @@ class KuotaController extends Controller
 
         $this->getOwnedBasecamp($basecampId);
 
-        $kuota = BasecampKuota::updateOrCreate(
-            [
-                'basecamp_id' => $basecampId, 
-                'tanggal' => $request->tanggal
-            ],
-            [
-                'kuota' => $request->kuota,
-                'kuota_terpakai' => 0
-            ]
-        );
+        // Jangan reset kuota_terpakai bila tanggal sudah punya data.
+        // Sebelumnya updateOrCreate selalu menulis kuota_terpakai = 0
+        // sehingga jumlah pendaki yang sudah memesan bisa hilang.
+        $kuota = BasecampKuota::firstOrNew([
+            'basecamp_id' => $basecampId,
+            'tanggal' => $request->tanggal,
+        ]);
+
+        $sudahAda = $kuota->exists;
+
+        $kuota->kuota = $request->kuota;
+
+        if (!$sudahAda) {
+            $kuota->kuota_terpakai = 0;
+        }
+
+        $kuota->save();
 
         return response()->json([
-            'message' => 'Kuota berhasil disimpan',
+            'message' => $sudahAda
+                ? 'Kuota tanggal ini berhasil diperbarui'
+                : 'Kuota berhasil disimpan',
             'data' => $kuota
-        ], 201);
+        ], $sudahAda ? 200 : 201);
     }
 
     public function update(Request $request, $basecampId, $id)
@@ -82,11 +91,18 @@ class KuotaController extends Controller
         $kuota = BasecampKuota::where('basecamp_id', $basecampId)
             ->where('id', $id)
             ->firstOrFail();
-        
+
         $validateData = $request->validate([
-            'tanggal' => 'required|date|after_or_equal:today',
+            'tanggal' => 'required|date',
             'kuota' => 'required|integer|min:0'
         ]);
+
+        if ($validateData['kuota'] < $kuota->kuota_terpakai) {
+            return response()->json([
+                'message' => 'Kuota tidak boleh lebih kecil dari jumlah yang sudah terpakai ('
+                    . $kuota->kuota_terpakai . ').'
+            ], 422);
+        }
 
         $kuota->update($validateData);
 

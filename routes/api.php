@@ -17,6 +17,7 @@ use App\Http\Controllers\AdminGunung\BasecampController;
 use App\Http\Controllers\AdminGunung\DashboardController as AdminGunungDashboardController;
 
 use App\Http\Controllers\AdminBasecamp\BookingController as AdminBasecampBookingController;
+use App\Http\Controllers\AdminBasecamp\BasecampController as AdminBasecampBasecampController;
 use App\Http\Controllers\AdminBasecamp\KuotaController;
 use App\Http\Controllers\AdminBasecamp\DashboardController as AdminBasecampDashboardController;
 use App\Http\Controllers\AdminBasecamp\JalurController;
@@ -29,6 +30,9 @@ use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\ReviewController;
 use App\Http\Controllers\User\AdminRequestController as UserAdminRequestController;
 use App\Http\Controllers\User\BasecampController as UserBasecampController;
+use App\Http\Controllers\User\TrackingController as UserTrackingController;
+
+use App\Http\Controllers\Admin\TrackingController as AdminTrackingController;
 
 use App\Http\Controllers\NotificationController;
 
@@ -42,7 +46,7 @@ use Illuminate\Support\Facades\Route;
 // Authentication routes
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/google-login', [AuthController::class, 'googleLogin']); // 🛠️ Route baru untuk Google Sign-In Flutter
+Route::post('/google-login', [AuthController::class, 'googleLogin']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 // belum ditest postman
@@ -65,6 +69,9 @@ Route::prefix('admin-basecamp')
         Route::get('/bookings/{id}', [AdminBasecampBookingController::class, 'show']);
         Route::patch('/bookings/{id}/checkin', [AdminBasecampBookingController::class, 'checkin']);
         Route::patch('/bookings/{id}/checkout', [AdminBasecampBookingController::class, 'checkout']);
+
+        Route::get('/basecamp', [AdminBasecampBasecampController::class, 'show']);
+        Route::put('/basecamp/harga-tiket', [AdminBasecampBasecampController::class, 'updateHargaTiket']);
 
         Route::get('/basecamps/{basecampId}/kuotas', [KuotaController::class, 'index']);
         Route::get('/basecamps/{basecampId}/kuotas/{id}', [KuotaController::class, 'show']);
@@ -154,6 +161,16 @@ Route::prefix('super-admin')
         Route::get('/activity-logs', [ActivityLogController::class, 'index']);
     });
 
+// Tracking GPS - dipakai bersama oleh super admin, admin gunung, admin basecamp.
+// Pembatasan data per role dilakukan di dalam controller.
+Route::prefix('admin/tracking')
+    ->middleware(['auth:sanctum', 'role:super_admin,admin_gunung,admin_basecamp'])
+    ->group(function () {
+        Route::get('/hikers', [AdminTrackingController::class, 'hikers']);
+        Route::get('/history', [AdminTrackingController::class, 'history']);
+        Route::get('/bookings/{id}', [AdminTrackingController::class, 'showBooking']);
+    });
+
 
 // User Routes
 Route::prefix('user')
@@ -178,6 +195,14 @@ Route::prefix('user')
         Route::patch('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
         Route::patch('/bookings/{id}/reschedule', [BookingController::class, 'reschedule']);
         Route::get('/bookings/{id}/pdf', [BookingController::class, 'downloadPdf']);
+
+        // Tracking GPS pendaki
+        Route::get('/tracking/active', [UserTrackingController::class, 'active']);
+        Route::post('/tracking/start', [UserTrackingController::class, 'start']);
+        Route::post('/tracking/ping', [UserTrackingController::class, 'ping'])
+            ->middleware('throttle:120,1');
+        Route::post('/tracking/stop', [UserTrackingController::class, 'stop']);
+        Route::get('/tracking/{id}', [UserTrackingController::class, 'show']);
 
         Route::get('/profile', [ProfileController::class, 'show']);
         Route::put('/profile', [ProfileController::class, 'update']);

@@ -41,7 +41,10 @@ class BasecampController extends Controller
             'nama' => 'required|string',
             'gunung_id' => 'required|exists:gunungs,id',
             'lokasi' => 'required|string',
-            'harga_tiket' => 'required|integer|min:0',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            // Harga tiket diatur oleh Admin Basecamp, bukan Admin Gunung.
+            'harga_tiket' => 'nullable|integer|min:0',
             'foto_utama' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
         ]);
 
@@ -61,7 +64,9 @@ class BasecampController extends Controller
             'nama' => $request->nama,
             'gunung_id' => $request->gunung_id,
             'lokasi' => $request->lokasi,
-            'harga_tiket' => $request->harga_tiket,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'harga_tiket' => $request->harga_tiket ?? 0,
             'foto_utama' => $fotoPath
         ]);
 
@@ -83,12 +88,13 @@ class BasecampController extends Controller
             'nama' => 'sometimes|required|string',
             'gunung_id' => 'sometimes|required|exists:gunungs,id',
             'lokasi' => 'sometimes|required|string',
-            'harga_tiket' => 'sometimes|required|integer',
-            'kuota' => 'sometimes|required|integer',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'foto_utama' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
         ]);
 
-        $data = $request->except('foto_utama');
+        // Harga tiket hanya boleh diubah oleh Admin Basecamp.
+        $data = $request->only(['nama', 'gunung_id', 'lokasi', 'latitude', 'longitude']);
 
         if ($request->hasFile('foto_utama')) {
 

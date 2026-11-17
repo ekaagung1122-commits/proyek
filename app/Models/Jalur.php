@@ -22,9 +22,4 @@ class Jalur extends Model
     {
         return $this->belongsTo(Basecamp::class);
     }
-
-    public function kuota()
-    {
-        return $this->hasOne(Jalur::class);
-    }
 }

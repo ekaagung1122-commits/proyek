@@ -39,6 +39,8 @@ class GunungController extends Controller
         $request->validate([
             'nama' => 'required|string',
             'lokasi' => 'required|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'ketinggian' => 'required|integer',
             'deskripsi' => 'nullable|string',
             'foto_utama' => 'nullable|image|mimes:jpg,jpeg,png|max:4096'
@@ -56,6 +58,8 @@ class GunungController extends Controller
         $gunung = Gunung::create([
             'nama' => $request->nama,
             'lokasi' => $request->lokasi,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
             'ketinggian' => $request->ketinggian,
             'deskripsi' => $request->deskripsi,
             'foto_utama' => $fotoPath,
@@ -78,6 +82,8 @@ class GunungController extends Controller
         $request->validate([
             'nama' => 'sometimes|required|string',
             'lokasi' => 'sometimes|required|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'ketinggian' => 'sometimes|required|integer',
             'deskripsi' => 'nullable|string',
             'status' => 'sometimes|boolean',
@@ -90,6 +96,14 @@ class GunungController extends Controller
 
         if ($request->filled('lokasi')) {
             $gunung->lokasi = $request->lokasi;
+        }
+
+        if ($request->exists('latitude')) {
+            $gunung->latitude = $request->input('latitude') ?: null;
+        }
+
+        if ($request->exists('longitude')) {
+            $gunung->longitude = $request->input('longitude') ?: null;
         }
 
         if ($request->filled('ketinggian')) {

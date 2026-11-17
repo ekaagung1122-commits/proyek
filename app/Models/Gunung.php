@@ -12,6 +12,8 @@ class Gunung extends Model
     protected $fillable = [
         'nama',
         'lokasi',
+        'latitude',
+        'longitude',
         'foto_utama',
         'deskripsi',
         'status',

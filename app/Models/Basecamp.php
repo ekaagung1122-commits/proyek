@@ -13,6 +13,8 @@ class Basecamp extends Model
         'nama',
         'gunung_id',
         'lokasi',
+        'latitude',
+        'longitude',
         'harga_tiket',
         'admin_basecamp_id',
         'kuota',
@@ -65,5 +67,13 @@ class Basecamp extends Model
     public function peralatans()
     {
         return $this->hasMany(Peralatan::class, 'basecamp_id');
+    }
+
+    // =========================
+    // RELASI TRACKING GPS
+    // =========================
+    public function trackingSessions()
+    {
+        return $this->hasMany(TrackingSession::class);
     }
 }

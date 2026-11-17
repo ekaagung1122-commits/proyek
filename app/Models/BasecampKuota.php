@@ -17,9 +17,4 @@ class BasecampKuota extends Model
     {
         return $this->belongsTo(Basecamp::class);
     }
-
-    public function jalur()
-    {
-        return $this->belongsTo(Jalur::class);
-    }
 }
