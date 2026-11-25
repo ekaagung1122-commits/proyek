@@ -31,6 +31,7 @@ use App\Http\Controllers\User\ReviewController;
 use App\Http\Controllers\User\AdminRequestController as UserAdminRequestController;
 use App\Http\Controllers\User\BasecampController as UserBasecampController;
 use App\Http\Controllers\User\TrackingController as UserTrackingController;
+use App\Http\Controllers\User\ChatbotController;
 
 use App\Http\Controllers\Admin\TrackingController as AdminTrackingController;
 
@@ -44,14 +45,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Authentication routes
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/google-login', [AuthController::class, 'googleLogin']);
+Route::post('/login', [AuthController::class, 'login'])->middleware(['throttle:5,1', 'firebase.app_check']);
+Route::post('/register', [AuthController::class, 'register'])->middleware(['throttle:3,10', 'firebase.app_check']);
+Route::post('/google-login', [AuthController::class, 'googleLogin'])->middleware(['throttle:10,1', 'firebase.app_check']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 // belum ditest postman
-Route::post('/password/forgot', [ForgotPasswordController::class, 'forgotPassword']);
-Route::post('/password/reset', [ForgotPasswordController::class, 'resetPassword']);
+Route::post('/password/forgot', [ForgotPasswordController::class, 'forgotPassword'])->middleware(['throttle:3,10', 'firebase.app_check']);
+Route::post('/password/reset', [ForgotPasswordController::class, 'resetPassword'])->middleware(['throttle:5,10', 'firebase.app_check']);
 
 // Protected route for admin role
 Route::middleware(['auth:sanctum', 'role:admin_gunung,super_admin,admin_basecamp'])->get('/admin', function () {
@@ -219,6 +220,10 @@ Route::prefix('user')
             UserAdminRequestController::class,
             'cancel'
         ]);
+
+        Route::get('/chatbot/messages', [ChatbotController::class, 'index']);
+        Route::post('/chatbot/messages', [ChatbotController::class, 'store']);
+        Route::delete('/chatbot/messages', [ChatbotController::class, 'destroy']);
     });
 
 // Notifications route  

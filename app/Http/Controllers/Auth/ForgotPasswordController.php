@@ -15,7 +15,7 @@ class ForgotPasswordController extends Controller
     public function forgotPassword(Request $request)
     {
         $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email|max:255|exists:users,email',
         ]);
 
         $status = Password::sendResetLink(
@@ -33,8 +33,8 @@ class ForgotPasswordController extends Controller
     {
         $request->validate([
             'token' => 'required',
-            'email' => 'required|email|exists:users,email',
-            'password' => 'required|string|min:8|confirmed',
+            'email' => 'required|email|max:255|exists:users,email',
+            'password' => 'required|string|min:8|max:255|confirmed',
         ]);
 
         $status = Password::reset(

@@ -104,11 +104,16 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        $request->validate([
+            'email' => 'required|email|max:255',
+            'password' => 'required|string|max:255',
+        ]);
+
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
-                'message' => 'Unauthorized'
+                'message' => 'Email atau password salah.'
             ], 401);
         }
 
@@ -155,7 +160,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:6|confirmed', 
+            'password' => 'required|string|min:8|max:255|confirmed',
         ]);
 
         if ($validator->fails()) {
