@@ -17,17 +17,20 @@ use Illuminate\Http\Request;
 
 class AdminRequestController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $query = AdminRequest::with('user');
+        $query = AdminRequest::with(['user', 'documents']);
 
-        if (request()->has('status')) {
-            $query->where('status', request()->status);
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('request_type')) {
+            $query->where('request_type', $request->request_type);
         }
 
         $data = $query->latest()
         ->paginate(10)
-        ->appends(request()->query());
+        ->appends($request->query());
 
         return response()->json([
             'message' => 'Daftar Request Admin',
@@ -40,8 +43,12 @@ class AdminRequestController extends Controller
         return AdminRequest::with('documents')->findOrFail($id);
     }
 
-    public function approve($id)
+    public function approve(Request $request, $id)
     {
+        $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
         $req = AdminRequest::findOrFail($id);
         if ($req->status !== 'pending') {
             return response()->json([
@@ -52,34 +59,23 @@ class AdminRequestController extends Controller
         $targetUser = null;
 
         if (!empty($req->user_id)) {
-            // Jalur Normal: Cari pakai ID jika ada
             $targetUser = User::find($req->user_id);
         } elseif (!empty($req->email)) {
-            // 🌟 JALUR DARURAT DEMO: Jika ID null, cari akun di tabel users yang email-nya cocok!
             $targetUser = User::where('email', $req->email)->first();
         }
 
-        // 2. Tentukan nama role secara dinamis
         $roleName = !empty($req->basecamp_id) ? 'admin_basecamp' : 'admin_gunung';
         $role = Role::where('name', $roleName)->first();
 
-        // 3. Cek Validasi Data
         if ($targetUser && $role) {
-            
-            // Tempelkan role ke user yang berhasil ditemukan lewat email tadi
             $targetUser->roles()->syncWithoutDetaching($role->id);
-
             if ($req->basecamp_id) {
                 $basecamp = Basecamp::find($req->basecamp_id);
                 if ($basecamp) {
-                    $basecamp->update([
-                        'admin_basecamp_id' => $targetUser->id
-                    ]);
+                    $basecamp->update(['admin_basecamp_id' => $targetUser->id]);
                 }
             }
-            
         } else {
-            // Jika masih gagal, lempar error detail ke React untuk dibaca
             return response()->json([
                 'message' => 'Gagal menambah role karena data di VPS tidak lengkap!',
                 'detail_error' => [
@@ -91,29 +87,22 @@ class AdminRequestController extends Controller
             ], 422);
         }
 
-        // 4. Update status pengajuan
         $req->update([
             'status' => 'approved',
-            'reason' => 'Pengajuan telah disetujui',
+            'reason' => $request->reason,
         ]);
 
-        // 5. Kirim Email Notifikasi
         if (!empty($req->email)) {
             Mail::to($req->email)->send(new RequestStatusMail($req, $targetUser));
+        } elseif ($targetUser && $targetUser->email) {
+            Mail::to($targetUser->email)->send(new RequestStatusMail($req, $targetUser));
         }
 
-        logActivity(
-            'approve',
-            'admin_request',
-            'Super Admin menyetujui request admin ID ' . $req->id
-        );
+        logActivity('approve', 'admin_request', 'Super Admin menyetujui request admin ID ' . $req->id);
 
         return response()->json([
             'message' => 'Request admin berhasil disetujui',
-            'data' => [
-                'user' => $targetUser->email,
-                'role' => $role->name,
-            ]
+            'data' => ['user' => $targetUser->email, 'role' => $role->name]
         ]);
     }
 

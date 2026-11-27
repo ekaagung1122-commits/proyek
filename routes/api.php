@@ -86,6 +86,7 @@ Route::prefix('admin-basecamp')
         Route::put('/basecamps/{basecampId}/jalurs/{id}', [JalurController::class, 'update']);
         Route::delete('/basecamps/{basecampId}/jalurs/{id}', [JalurController::class, 'destroy']);
 
+        Route::get('/kategori-peralatan', [AdminBasecampPeralatanController::class, 'kategoriList']);
         Route::get('/basecamps/{basecampId}/peralatans', [AdminBasecampPeralatanController::class, 'index']);
         Route::get('/basecamps/{basecampId}/peralatans/{id}', [AdminBasecampPeralatanController::class, 'show']);
         Route::post('/basecamps/{basecampId}/peralatans', [AdminBasecampPeralatanController::class, 'store']);
@@ -192,6 +193,8 @@ Route::prefix('user')
         Route::get('/bookings', [BookingController::class, 'index']);
         Route::get('/bookings/history', [BookingController::class, 'history']);
         Route::get('/bookings/{id}', [BookingController::class, 'show']);
+        Route::post('/bookings/{id}/pay', [BookingController::class, 'pay']);
+        Route::get('/bookings/{id}/payment-status', [BookingController::class, 'paymentStatus']);
         Route::post('/bookings', [BookingController::class, 'store']);
         Route::patch('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
         Route::patch('/bookings/{id}/reschedule', [BookingController::class, 'reschedule']);

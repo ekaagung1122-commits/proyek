@@ -24,8 +24,69 @@ class AdminRequestController extends Controller
     {
         $request->validate([
             'request_type' => 'required|in:admin_gunung',
-            'documents.*' => 'required|file|mimes:pdf,jpg,png|max:4096',
+            'nama_gunung' => 'nullable|string|max:255',
+            'lokasi' => 'nullable|string|max:255',
+            'deskripsi' => 'nullable|string',
         ]);
+
+        $docs = [];
+        // coba berbagai format key
+        $f = $request->file('documents');
+        if ($f) {
+            $docs = is_array($f) ? $f : [$f];
+        }
+        if (count($docs) < 1) {
+            $i = 0;
+            while ($request->hasFile("documents.$i")) {
+                $docs[] = $request->file("documents.$i");
+                $i++;
+            }
+        }
+        if (count($docs) < 1 && $request->hasFile('documents.0')) {
+            $i = 0;
+            while ($request->hasFile("documents.$i")) {
+                $docs[] = $request->file("documents.$i");
+                $i++;
+            }
+        }
+        // cek allFiles untuk key yang mengandung documents
+        if (count($docs) < 1) {
+            foreach ($request->allFiles() as $key => $val) {
+                if (strpos($key, 'documents') === 0) {
+                    if (is_array($val)) {
+                        foreach ($val as $v) $docs[] = $v;
+                    } else {
+                        $docs[] = $val;
+                    }
+                }
+            }
+        }
+        if (count($docs) < 1) {
+            // fallback: ambil semua file yang diupload
+            $all = $request->allFiles();
+            foreach ($all as $val) {
+                if (is_array($val)) {
+                    foreach ($val as $v) $docs[] = $v;
+                } else {
+                    $docs[] = $val;
+                }
+            }
+        }
+        if (count($docs) < 1) {
+            return response()->json(['message' => 'Dokumen persyaratan wajib diunggah (minimal 1 file).'], 422);
+        }
+        foreach ($docs as $f) {
+            if (!$f || !$f->isValid()) {
+                return response()->json(['message' => 'File dokumen tidak valid.'], 422);
+            }
+            $ext = strtolower($f->getClientOriginalExtension());
+            if (!in_array($ext, ['pdf', 'jpg', 'jpeg', 'png'])) {
+                return response()->json(['message' => 'Dokumen harus berformat PDF, JPG, atau PNG.'], 422);
+            }
+            if ($f->getSize() > 4096 * 1024) {
+                return response()->json(['message' => 'Ukuran setiap dokumen maksimal 4MB.'], 422);
+            }
+        }
 
         $exists = AdminRequest::where('user_id', auth()->id())
             ->where('status', 'pending')
@@ -33,29 +94,38 @@ class AdminRequestController extends Controller
             ->exists();
 
         if ($exists) {
-            return response()->json
-            ([
+            return response()->json([
                 'message' => 'Request masih pending'
             ], 400);
         }
 
+        $notesParts = [];
+        if ($request->filled('nama_gunung')) {
+            $notesParts[] = 'Nama Gunung: ' . $request->nama_gunung;
+        }
+        if ($request->filled('lokasi')) {
+            $notesParts[] = 'Lokasi: ' . $request->lokasi;
+        }
+        if ($request->filled('deskripsi')) {
+            $notesParts[] = 'Deskripsi: ' . $request->deskripsi;
+        }
+
         $data = AdminRequest::create([
             'user_id' => auth()->id(),
+            'email' => auth()->user()->email,
             'request_by' => auth()->id(),
             'request_type' => 'admin_gunung',
             'status' => 'pending',
+            'notes' => count($notesParts) > 0 ? implode("\n", $notesParts) : null,
         ]);
 
-        if ($request->hasFile('documents')) {
-            foreach ($request->file('documents') as $file) {
-                $path = $file->store('admin_documents', 'public');
-
-                AdminRequestDocument::create([
-                    'admin_request_id' => $data->id,
-                    'document_name' => $file->getClientOriginalName(),
-                    'document_path' => $path,
-                ]);
-            }
+        foreach ($docs as $file) {
+            $path = $file->store('admin_documents', 'public');
+            AdminRequestDocument::create([
+                'admin_request_id' => $data->id,
+                'document_name' => $file->getClientOriginalName(),
+                'document_path' => $path,
+            ]);
         }
 
         return response()->json([

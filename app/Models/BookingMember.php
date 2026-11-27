@@ -13,6 +13,7 @@ class BookingMember extends Model
         'tanggal_lahir',
         'jenis_kelamin',
         'identitas',
+        'no_hp',
         'foto_identitas',
     ];
 
