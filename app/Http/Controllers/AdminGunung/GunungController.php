@@ -42,6 +42,7 @@ class GunungController extends Controller
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'ketinggian' => 'required|integer',
+            'tingkat_kesulitan' => 'nullable|in:mudah,sedang,sulit',
             'deskripsi' => 'nullable|string',
             'foto_utama' => 'nullable|image|mimes:jpg,jpeg,png|max:4096'
         ]);
@@ -61,6 +62,7 @@ class GunungController extends Controller
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
             'ketinggian' => $request->ketinggian,
+            'tingkat_kesulitan' => $request->tingkat_kesulitan,
             'deskripsi' => $request->deskripsi,
             'foto_utama' => $fotoPath,
             'created_by' => auth()->id(),
@@ -85,6 +87,7 @@ class GunungController extends Controller
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'ketinggian' => 'sometimes|required|integer',
+            'tingkat_kesulitan' => 'nullable|in:mudah,sedang,sulit',
             'deskripsi' => 'nullable|string',
             'status' => 'sometimes|boolean',
             'foto_utama' => 'nullable|image|mimes:jpg,jpeg,png|max:4096'
@@ -108,6 +111,10 @@ class GunungController extends Controller
 
         if ($request->filled('ketinggian')) {
             $gunung->ketinggian = $request->ketinggian;
+        }
+
+        if ($request->exists('tingkat_kesulitan')) {
+            $gunung->tingkat_kesulitan = $request->input('tingkat_kesulitan') ?: null;
         }
 
         if ($request->filled('deskripsi')) {

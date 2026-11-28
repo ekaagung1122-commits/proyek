@@ -18,6 +18,7 @@ class Gunung extends Model
         'deskripsi',
         'status',
         'ketinggian',
+        'tingkat_kesulitan',
         'created_by'
     ];
 

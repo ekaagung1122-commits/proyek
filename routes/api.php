@@ -32,6 +32,7 @@ use App\Http\Controllers\User\AdminRequestController as UserAdminRequestControll
 use App\Http\Controllers\User\BasecampController as UserBasecampController;
 use App\Http\Controllers\User\TrackingController as UserTrackingController;
 use App\Http\Controllers\User\ChatbotController;
+use App\Http\Controllers\User\RecommendationController;
 
 use App\Http\Controllers\Admin\TrackingController as AdminTrackingController;
 
@@ -227,6 +228,9 @@ Route::prefix('user')
         Route::get('/chatbot/messages', [ChatbotController::class, 'index']);
         Route::post('/chatbot/messages', [ChatbotController::class, 'store']);
         Route::delete('/chatbot/messages', [ChatbotController::class, 'destroy']);
+
+        Route::get('/recommendations', [RecommendationController::class, 'index']);
+        Route::post('/recommendations/events', [RecommendationController::class, 'storeEvent']);
     });
 
 // Notifications route  

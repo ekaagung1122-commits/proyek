@@ -26,6 +26,14 @@ class ProfileController extends Controller
             'phone' => 'nullable|string|max:20',
             'alamat' => 'nullable|string|max:255',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'tanggal_lahir' => 'nullable|date',
+            'jenis_kelamin' => 'nullable|in:L,P',
+            'experience_level' => 'nullable|in:beginner,intermediate,advanced',
+            'preferensi' => 'nullable|array',
+            'preferensi.lokasi_favorit' => 'nullable|string|max:255',
+            'preferensi.budget_sewa' => 'nullable|numeric|min:0',
+            'preferensi.alat_dimiliki' => 'nullable|array',
+            'preferensi.alat_dimiliki.*' => 'nullable|string|max:100',
         ]);
 
         if ($request->hasFile('foto')) {

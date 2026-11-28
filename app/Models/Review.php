@@ -8,7 +8,7 @@ class Review extends Model
 {
     protected $fillable = [
         'user_id',
-        'booking_id',
+        'bookings_id',
         'gunung_id',
         'basecamp_id',
         'rating',
@@ -22,7 +22,7 @@ class Review extends Model
 
     public function booking()
     {
-        return $this->belongsTo(Booking::class);
+        return $this->belongsTo(Booking::class, 'bookings_id');
     }
 
     public function gunung()

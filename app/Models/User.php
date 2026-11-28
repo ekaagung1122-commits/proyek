@@ -22,6 +22,10 @@ class User extends Authenticatable
         'phone',
         'alamat',
         'foto',
+        'tanggal_lahir',
+        'jenis_kelamin',
+        'experience_level',
+        'preferensi',
     ];
 
     protected function casts(): array
@@ -29,6 +33,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'tanggal_lahir' => 'date',
+            'preferensi' => 'array',
         ];
     }
 
