@@ -11,6 +11,14 @@ services:
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+      - CHATBOT_AI_ENABLED=${CHATBOT_AI_ENABLED:-true}
+      - CHATBOT_AI_API_KEY=${CHATBOT_AI_API_KEY:-}
+      - CHATBOT_AI_MODEL=${CHATBOT_AI_MODEL:-gemini-2.5-flash}
+      - CHATBOT_AI_BASE_URL=${CHATBOT_AI_BASE_URL:-https://generativelanguage.googleapis.com/v1beta}
+      - CHATBOT_AI_TIMEOUT=${CHATBOT_AI_TIMEOUT:-20}
+      - MIDTRANS_SERVER_KEY=${MIDTRANS_SERVER_KEY:-}
+      - MIDTRANS_CLIENT_KEY=${MIDTRANS_CLIENT_KEY:-}
+      - MIDTRANS_IS_PRODUCTION=${MIDTRANS_IS_PRODUCTION:-false}
     depends_on:
       - db
 
