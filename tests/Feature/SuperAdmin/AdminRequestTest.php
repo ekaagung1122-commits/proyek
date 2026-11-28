@@ -45,7 +45,9 @@ class AdminRequestTest extends TestCase
         // Catatan: Jika di route list Anda menggunakan kata 'requests' (jamak), ganti url di bawah menjadi /requests/
         $response = $this->withHeaders([
             'Accept' => 'application/json',
-        ])->postJson("/api/super-admin/requests/{$request->id}/approve");
+        ])->postJson("/api/super-admin/requests/{$request->id}/approve", [
+            'reason' => 'Disetujui oleh Super Admin',
+        ]);
 
         $response->assertStatus(200)
                  ->assertJson([
@@ -134,7 +136,9 @@ class AdminRequestTest extends TestCase
 
         $response = $this->withHeaders([
             'Accept' => 'application/json',
-        ])->postJson("/api/super-admin/requests/{$request->id}/approve");
+        ])->postJson("/api/super-admin/requests/{$request->id}/approve", [
+            'reason' => 'Disetujui sebagai admin basecamp',
+        ]);
 
         $response->assertStatus(200);
 
@@ -142,5 +146,21 @@ class AdminRequestTest extends TestCase
             'id' => $basecamp->id,
             'admin_basecamp_id' => $user->id
         ]);
+    }
+
+    public function test_approve_requires_reason(): void
+    {
+        $request = AdminRequest::factory()->create([
+            'user_id' => User::factory()->create()->id,
+            'request_type' => 'admin_gunung',
+            'status' => 'pending',
+        ]);
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson("/api/super-admin/requests/{$request->id}/approve", []);
+
+        $response->assertStatus(422)
+                 ->assertJsonValidationErrors(['reason']);
     }
 }

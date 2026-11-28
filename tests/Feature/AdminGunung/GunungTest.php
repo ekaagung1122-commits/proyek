@@ -167,4 +167,59 @@ class GunungTest extends TestCase
             'gunung_id' => $gunung->id
         ]);
     }
+
+    public function test_admin_gunung_can_create_gunung_with_tingkat_kesulitan()
+    {
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson('/api/admin-gunung/gunungs', [
+            'nama' => 'Gunung Raung',
+            'lokasi' => 'Jawa Timur',
+            'ketinggian' => 3332,
+            'tingkat_kesulitan' => 'sulit',
+            'deskripsi' => 'Gunung kaldera',
+        ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('gunungs', [
+            'nama' => 'Gunung Raung',
+            'tingkat_kesulitan' => 'sulit',
+        ]);
+    }
+
+    public function test_create_gunung_rejects_invalid_tingkat_kesulitan()
+    {
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->postJson('/api/admin-gunung/gunungs', [
+            'nama' => 'Gunung Test',
+            'lokasi' => 'Jawa Barat',
+            'ketinggian' => 2000,
+            'tingkat_kesulitan' => 'ekstrem',
+        ]);
+
+        $response->assertStatus(422)
+                 ->assertJsonValidationErrors(['tingkat_kesulitan']);
+    }
+
+    public function test_admin_gunung_can_update_tingkat_kesulitan_to_null()
+    {
+        $gunung = Gunung::factory()->create([
+            'created_by' => $this->admin->id,
+            'tingkat_kesulitan' => 'sedang',
+        ]);
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->putJson("/api/admin-gunung/gunungs/{$gunung->id}", [
+            'nama' => $gunung->nama,
+            'lokasi' => $gunung->lokasi,
+            'ketinggian' => $gunung->ketinggian,
+            'tingkat_kesulitan' => '',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertNull($gunung->fresh()->tingkat_kesulitan);
+    }
 }

@@ -96,16 +96,18 @@ class BasecampTest extends TestCase
         $gunung = Gunung::factory()->create(['created_by' => $this->admin->id]);
         $basecamp = Basecamp::factory()->create([
             'gunung_id' => $gunung->id,
-            'nama' => 'Basecamp Patak Banteng'
+            'nama' => 'Basecamp Patak Banteng',
+            'lokasi' => 'Lokasi Lama',
+            'harga_tiket' => 15000,
         ]);
 
         $response = $this->withHeaders([
             'Accept' => 'application/json',
         ])->putJson("/api/admin-gunung/basecamps/{$basecamp->id}", [
-            'nama' => $basecamp->nama, // sertakan field required lengkap
+            'nama' => 'Basecamp Patak Banteng Baru',
             'gunung_id' => $basecamp->gunung_id,
-            'lokasi' => $basecamp->lokasi,
-            'harga_tiket' => 20000
+            'lokasi' => 'Lokasi Baru',
+            'harga_tiket' => 20000,
         ]);
 
         $response->assertStatus(200)
@@ -115,7 +117,9 @@ class BasecampTest extends TestCase
 
         $this->assertDatabaseHas('basecamps', [
             'id' => $basecamp->id,
-            'harga_tiket' => 20000
+            'nama' => 'Basecamp Patak Banteng Baru',
+            'lokasi' => 'Lokasi Baru',
+            'harga_tiket' => 15000,
         ]);
     }
 

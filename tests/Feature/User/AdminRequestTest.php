@@ -64,7 +64,7 @@ class AdminRequestTest extends TestCase
             'request_by' => $user->id,
             'request_type' => 'admin_gunung',
             'status' => 'pending',
-            'email' => null // Memastikan di DB tersimpan null untuk user biasa
+            'email' => $user->email,
         ]);
 
         $this->assertDatabaseCount('admin_request_documents', 2);
@@ -83,5 +83,63 @@ class AdminRequestTest extends TestCase
         ], ['Accept' => 'application/json']);
 
         $response->assertStatus(422);
+    }
+
+    public function test_user_request_stores_notes_from_gunung_fields(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $response = $this->post('/api/user/requests', [
+            'request_type' => 'admin_gunung',
+            'nama_gunung' => 'Gunung Argopuro',
+            'lokasi' => 'Jawa Timur',
+            'deskripsi' => 'Gunung dengan jalur panjang',
+            'documents' => [UploadedFile::fake()->create('ktp.pdf', 100, 'application/pdf')],
+        ], ['Accept' => 'application/json']);
+
+        $response->assertStatus(200);
+
+        $request = AdminRequest::where('request_by', $user->id)->firstOrFail();
+        $this->assertStringContainsString('Nama Gunung: Gunung Argopuro', (string) $request->notes);
+        $this->assertStringContainsString('Lokasi: Jawa Timur', (string) $request->notes);
+        $this->assertStringContainsString('Deskripsi: Gunung dengan jalur panjang', (string) $request->notes);
+    }
+
+    public function test_user_request_requires_documents(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $response = $this->post('/api/user/requests', [
+            'request_type' => 'admin_gunung',
+        ], ['Accept' => 'application/json']);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_user_cannot_create_duplicate_pending_admin_gunung_request(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        AdminRequest::factory()->create([
+            'user_id' => $user->id,
+            'request_by' => $user->id,
+            'request_type' => 'admin_gunung',
+            'status' => 'pending',
+        ]);
+
+        $response = $this->post('/api/user/requests', [
+            'request_type' => 'admin_gunung',
+            'documents' => [UploadedFile::fake()->create('ktp.pdf', 100, 'application/pdf')],
+        ], ['Accept' => 'application/json']);
+
+        $response->assertStatus(400)
+                 ->assertJsonFragment(['message' => 'Request masih pending']);
     }
 }

@@ -141,4 +141,53 @@ class ProfileTest extends TestCase
 
         $this->assertTrue(Hash::check('passwordbaru123', $user->fresh()->password));
     }
+
+    public function test_user_can_update_profile_preferences()
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $response = $this->putJson('/api/user/profile', [
+            'name' => $user->name,
+            'email' => $user->email,
+            'tanggal_lahir' => '2000-05-10',
+            'jenis_kelamin' => 'L',
+            'experience_level' => 'beginner',
+            'preferensi' => [
+                'lokasi_favorit' => 'Jawa Timur',
+                'budget_sewa' => 150000,
+                'alat_dimiliki' => ['Tenda', 'Carrier'],
+            ],
+        ]);
+
+        $response->assertStatus(200)
+                 ->assertJsonFragment([
+                     'message' => 'Profile berhasil diperbarui',
+                 ]);
+
+        $user->refresh();
+        $this->assertSame('beginner', $user->experience_level);
+        $this->assertSame('L', $user->jenis_kelamin);
+        $this->assertSame('2000-05-10', $user->tanggal_lahir?->format('Y-m-d'));
+        $this->assertSame('Jawa Timur', $user->preferensi['lokasi_favorit'] ?? null);
+    }
+
+    public function test_profile_preferences_validation()
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $response = $this->putJson('/api/user/profile', [
+            'name' => $user->name,
+            'email' => $user->email,
+            'jenis_kelamin' => 'X',
+            'experience_level' => 'expert',
+            'preferensi' => [
+                'budget_sewa' => -1,
+            ],
+        ], ['Accept' => 'application/json']);
+
+        $response->assertStatus(422)
+                 ->assertJsonValidationErrors(['jenis_kelamin', 'experience_level', 'preferensi.budget_sewa']);
+    }
 }
